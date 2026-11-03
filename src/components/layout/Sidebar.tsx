@@ -79,7 +79,7 @@ export function Sidebar({
     },
     {
       key: 'settings' as TabKey,
-      label: 'Pengaturan & Cloud',
+      label: 'Profil & Pengaturan',
       icon: Settings,
       badge: null,
     },

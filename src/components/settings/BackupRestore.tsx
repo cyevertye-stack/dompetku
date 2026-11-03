@@ -6,23 +6,17 @@ import {
   Upload,
   RefreshCw,
   Trash2,
-  Database,
-  Cloud,
   CheckCircle2,
   AlertCircle,
-  ExternalLink,
-  ShieldCheck,
 } from 'lucide-react';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 
 interface BackupRestoreProps {
   onRefreshData: () => Promise<void>;
-  onOpenDeploymentGuide: () => void;
 }
 
 export function BackupRestore({
   onRefreshData,
-  onOpenDeploymentGuide,
 }: BackupRestoreProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -159,33 +153,7 @@ export function BackupRestore({
         </div>
       )}
 
-      {/* 1. Database & Cloud Deployment Recommendation */}
-      <div className="bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-950 text-white rounded-3xl p-6 sm:p-8 shadow-xl">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1.5">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-500/20 text-blue-300 rounded-full text-xs font-semibold">
-              <Cloud className="w-3.5 h-3.5" />
-              <span>Rekomendasi Deployment Vercel & Online Database</span>
-            </div>
-            <h3 className="text-xl sm:text-2xl font-black tracking-tight">
-              Siap untuk Deploy ke Vercel & Database Cloud
-            </h3>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
-              Aplikasi telah disiapkan dengan skema Prisma PostgreSQL. Anda dapat langsung mengaitkannya ke database serverless online gratis terbaik seperti <b>Neon.tech</b> atau <b>Supabase</b>!
-            </p>
-          </div>
-
-          <button
-            onClick={onOpenDeploymentGuide}
-            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-bold rounded-xl shadow-lg transition-all cursor-pointer shrink-0"
-          >
-            <span>Buka Panduan Deploy</span>
-            <ExternalLink className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
-      {/* 2. Backup & Restore Grid */}
+      {/* Backup & Restore Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Backup Card */}
         <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col justify-between space-y-4 transition-colors">

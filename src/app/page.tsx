@@ -38,8 +38,7 @@ import { MonthlyBudgetModal } from '@/components/budgets/MonthlyBudgetModal';
 import { CategoryList } from '@/components/categories/CategoryList';
 import { CategoryModal } from '@/components/categories/CategoryModal';
 import { ReportOverview } from '@/components/reports/ReportOverview';
-import { BackupRestore } from '@/components/settings/BackupRestore';
-import { DeploymentGuideModal } from '@/components/settings/DeploymentGuideModal';
+import { ProfileSettingsView } from '@/components/profile/ProfileSettingsView';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { SavingsView } from '@/components/savings/SavingsView';
@@ -83,7 +82,6 @@ export default function DompetKuApp() {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
   const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
-  const [isDeploymentGuideOpen, setIsDeploymentGuideOpen] = useState(false);
   const [isExportingExcel, setIsExportingExcel] = useState(false);
 
   // Confirm delete dialog
@@ -242,6 +240,23 @@ export default function DompetKuApp() {
       document.documentElement.classList.add('dark');
     }
 
+    // Restore Saved Active Tab so page refresh stays on current tab
+    try {
+      const savedTab = localStorage.getItem('dompetku-active-tab') as TabKey | null;
+      const validTabs: TabKey[] = [
+        'dashboard',
+        'transactions',
+        'budgets',
+        'categories',
+        'savings',
+        'reports',
+        'settings',
+      ];
+      if (savedTab && validTabs.includes(savedTab)) {
+        setActiveTab(savedTab);
+      }
+    } catch (e) {}
+
     // Check User Session
     const savedUserStr = localStorage.getItem('dompetku-user');
     if (savedUserStr) {
@@ -269,6 +284,22 @@ export default function DompetKuApp() {
       localStorage.setItem('dompetku-theme', 'light');
     }
   };
+
+  // Tab Change Handler with Persistence
+  const handleTabChange = (tab: TabKey) => {
+    setActiveTab(tab);
+    try {
+      localStorage.setItem('dompetku-active-tab', tab);
+    } catch (e) {}
+  };
+
+  useEffect(() => {
+    if (isMounted) {
+      try {
+        localStorage.setItem('dompetku-active-tab', activeTab);
+      } catch (e) {}
+    }
+  }, [activeTab, isMounted]);
 
   // Logout Handler
   const handleLogout = () => {
@@ -628,22 +659,24 @@ export default function DompetKuApp() {
     );
   }
 
+  // Dedicated Solid Auth Screen (No transparent overlay over dashboard)
+  if (!currentUser) {
+    return (
+      <AuthModal
+        onLoginSuccess={(user) => {
+          setCurrentUser(user);
+          loadData(user.id);
+        }}
+      />
+    );
+  }
+
   return (
     <div className="flex h-screen w-full overflow-hidden bg-slate-100 dark:bg-slate-950 transition-colors">
-      {/* If not logged in, show Auth Screen */}
-      {!currentUser && (
-        <AuthModal
-          onLoginSuccess={(user) => {
-            setCurrentUser(user);
-            loadData(user.id);
-          }}
-        />
-      )}
-
       {/* Desktop Sidebar */}
       <Sidebar
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleTabChange}
         transactionCount={transactions.length}
         isOverBudget={metrics.remainingBudget < 0 && metrics.monthlyBudget > 0}
         currentUser={currentUser}
@@ -666,7 +699,7 @@ export default function DompetKuApp() {
             setIsAddTxModalOpen(true);
           }}
           onQuickExport={handleQuickExport}
-          onOpenSettings={() => setActiveTab('settings')}
+          onOpenSettings={() => handleTabChange('settings')}
           onLogout={handleLogout}
         />
 
@@ -866,23 +899,17 @@ export default function DompetKuApp() {
               </div>
             )}
 
-            {/* VIEW 6: PENGATURAN & CLOUD */}
+            {/* VIEW 6: PROFIL & PENGATURAN */}
             {activeTab === 'settings' && (
-              <div className="space-y-6 animate-in fade-in duration-300">
-                <div>
-                  <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-                    Pengaturan, Cadangan & Database Cloud
-                  </h2>
-                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-                    Kelola akun Anda ({currentUser?.email}), backup data, serta panduan database Supabase
-                  </p>
-                </div>
-
-                <BackupRestore
-                  onRefreshData={() => loadData(currentUser?.id)}
-                  onOpenDeploymentGuide={() => setIsDeploymentGuideOpen(true)}
-                />
-              </div>
+              <ProfileSettingsView
+                currentUser={currentUser}
+                onUpdateUser={(updatedUser) => setCurrentUser(updatedUser)}
+                onLogout={handleLogout}
+                transactionCount={transactions.length}
+                totalSavingsValue={totalSavings + totalGoldEstimatedValue}
+                categoryCount={categories.length}
+                onRefreshData={() => loadData(currentUser?.id)}
+              />
             )}
           </div>
         </main>
@@ -890,7 +917,7 @@ export default function DompetKuApp() {
         {/* Mobile Bottom Navigation */}
         <BottomNav
           activeTab={activeTab}
-          onTabChange={setActiveTab}
+          onTabChange={handleTabChange}
           onOpenAddModal={() => {
             setEditingTransaction(null);
             setIsAddTxModalOpen(true);
@@ -948,13 +975,7 @@ export default function DompetKuApp() {
         initialData={editingCategory}
       />
 
-      {/* 5. Deployment Guide Modal */}
-      <DeploymentGuideModal
-        isOpen={isDeploymentGuideOpen}
-        onClose={() => setIsDeploymentGuideOpen(false)}
-      />
-
-      {/* 6. Confirm Dialog */}
+      {/* 5. Confirm Dialog */}
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
         title={confirmDialog.title}

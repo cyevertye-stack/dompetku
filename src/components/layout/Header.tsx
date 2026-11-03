@@ -104,14 +104,14 @@ export function Header({
         {currentUser && (
           <div className="flex items-center gap-2 pl-1 border-l border-slate-200 dark:border-slate-800">
             <div
-              className="flex items-center gap-2 px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer"
-              title={`Masuk sebagai: ${currentUser.email}`}
+              className="flex items-center gap-2 px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700/80 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
+              title={`Profil & Pengaturan Akun (${currentUser.email})`}
               onClick={onOpenSettings}
             >
-              <div className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-black uppercase">
+              <div className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-black uppercase shadow-xs">
                 {currentUser.name ? currentUser.name.charAt(0) : 'U'}
               </div>
-              <span className="hidden md:inline-block max-w-[100px] truncate">
+              <span className="hidden sm:inline-block max-w-[120px] truncate">
                 {currentUser.name || currentUser.email}
               </span>
             </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   PiggyBank,
   Plus,
@@ -52,6 +52,23 @@ export function SavingsView({
   onRefresh,
 }: SavingsViewProps) {
   const [subTab, setSubTab] = useState<'money' | 'gold'>('money');
+
+  // Load saved subTab on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('dompetku-savings-subtab');
+      if (saved === 'money' || saved === 'gold') {
+        setSubTab(saved);
+      }
+    } catch (e) {}
+  }, []);
+
+  const handleSubTabChange = (tab: 'money' | 'gold') => {
+    setSubTab(tab);
+    try {
+      localStorage.setItem('dompetku-savings-subtab', tab);
+    } catch (e) {}
+  };
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isGoldModalOpen, setIsGoldModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'transaction' | 'goal'>('transaction');
@@ -181,7 +198,7 @@ export function SavingsView({
       <div className="flex bg-slate-200/80 dark:bg-slate-800/90 p-1.5 rounded-2xl gap-1.5 max-w-lg">
         <button
           type="button"
-          onClick={() => setSubTab('money')}
+          onClick={() => handleSubTabChange('money')}
           className={`flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 ${
             subTab === 'money'
               ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-sm'
@@ -199,7 +216,7 @@ export function SavingsView({
 
         <button
           type="button"
-          onClick={() => setSubTab('gold')}
+          onClick={() => handleSubTabChange('gold')}
           className={`flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 ${
             subTab === 'gold'
               ? 'bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-400 shadow-sm'

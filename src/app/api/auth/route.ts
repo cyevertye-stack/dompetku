@@ -209,6 +209,40 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 3. UPDATE PROFILE
+    if (action === 'update-profile') {
+      const { id, name } = body;
+      if (!id || !name || !name.trim()) {
+        return NextResponse.json(
+          { success: false, message: 'Nama lengkap wajib diisi!' },
+          { status: 400 }
+        );
+      }
+
+      const cleanName = name.trim();
+
+      if (hasSupabaseConfig) {
+        try {
+          await supabase.from('users').update({ name: cleanName }).eq('id', id);
+        } catch (e) {
+          // continue to local
+        }
+      }
+
+      const users = getStoredUsers();
+      const userIndex = users.findIndex((u) => u.id === id);
+      if (userIndex >= 0) {
+        users[userIndex].name = cleanName;
+        saveStoredUsers(users);
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: 'Profil berhasil diperbarui!',
+        data: { id, name: cleanName },
+      });
+    }
+
     return NextResponse.json({ success: false, message: 'Aksi tidak dikenal' }, { status: 400 });
   } catch (error) {
     return NextResponse.json(
