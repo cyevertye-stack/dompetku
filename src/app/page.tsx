@@ -136,19 +136,19 @@ export default function DompetKuApp() {
         savingsRes.json(),
       ]);
 
-      if (txData.success && Array.isArray(txData.data) && (txData.data.length > 0 || !localCached?.transactions)) {
+      if (txData.success && Array.isArray(txData.data)) {
         setTransactions(txData.data);
       } else if (localCached?.transactions) {
-        setTransactions(localCached.transactions);
+        setTransactions(localCached.transactions.filter((t: any) => t.userId === userId));
       }
 
-      if (catData.success && Array.isArray(catData.data) && (catData.data.length > 0 || !localCached?.categories)) {
+      if (catData.success && Array.isArray(catData.data)) {
         setCategories(catData.data);
       } else if (localCached?.categories) {
-        setCategories(localCached.categories);
+        setCategories(localCached.categories.filter((c: any) => c.userId === userId));
       }
 
-      if (budgetData.success && (Object.keys(budgetData.data || {}).length > 0 || !localCached?.monthlyBudgets)) {
+      if (budgetData.success && typeof budgetData.data === 'object') {
         setMonthlyBudgets(budgetData.data);
       } else if (localCached?.monthlyBudgets) {
         setMonthlyBudgets(localCached.monthlyBudgets);

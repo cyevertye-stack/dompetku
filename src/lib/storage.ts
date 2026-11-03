@@ -144,10 +144,12 @@ export async function getTransactions(filter?: TransactionFilter): Promise<Trans
 
   // 2. Fallback to Local Storage
   const state = ensureDataFile();
-  let list = [...state.transactions];
+  let list = [...(state.transactions || [])];
 
   if (filter?.userId) {
-    list = list.filter((t) => !t.userId || t.userId === filter.userId);
+    list = list.filter((t) => t.userId === filter.userId);
+  } else {
+    return [];
   }
 
   if (!filter) {
@@ -318,13 +320,15 @@ export async function deleteTransaction(id: string): Promise<boolean> {
 
 // CATEGORIES
 export async function getCategories(userId?: string): Promise<Category[]> {
+  if (!userId) return [];
+
   if (hasSupabaseConfig) {
     try {
-      let query = supabase.from('categories').select('*');
-      if (userId) {
-        query = query.or(`user_id.eq.${userId},is_default.eq.true`);
-      }
-      const { data, error } = await query;
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('user_id', userId);
+
       if (!error && Array.isArray(data)) {
         return data.map((row) => ({
           id: row.id,
@@ -342,8 +346,7 @@ export async function getCategories(userId?: string): Promise<Category[]> {
   }
 
   const state = ensureDataFile();
-  if (!userId) return state.categories;
-  return state.categories.filter((c) => !c.userId || c.userId === userId);
+  return (state.categories || []).filter((c) => c.userId === userId);
 }
 
 export async function createCategory(payload: Omit<Category, 'id'>): Promise<Category> {
@@ -431,13 +434,15 @@ export async function deleteCategory(id: string): Promise<{ success: boolean; me
 
 // BUDGETS
 export async function getMonthlyBudgets(userId?: string): Promise<Record<string, number>> {
+  if (!userId) return {};
+
   if (hasSupabaseConfig) {
     try {
-      let query = supabase.from('monthly_budgets').select('*');
-      if (userId) {
-        query = query.eq('user_id', userId);
-      }
-      const { data, error } = await query;
+      const { data, error } = await supabase
+        .from('monthly_budgets')
+        .select('*')
+        .eq('user_id', userId);
+
       if (!error && Array.isArray(data)) {
         const budgetsMap: Record<string, number> = {};
         data.forEach((row) => {
@@ -453,14 +458,8 @@ export async function getMonthlyBudgets(userId?: string): Promise<Record<string,
   const state = ensureDataFile();
   const budgetsMap: Record<string, number> = {};
   Object.entries(state.monthlyBudgets || {}).forEach(([k, v]) => {
-    if (userId) {
-      if (k.startsWith(`${userId}:`)) {
-        budgetsMap[k.replace(`${userId}:`, '')] = v;
-      } else if (!k.includes(':')) {
-        budgetsMap[k] = v;
-      }
-    } else {
-      budgetsMap[k] = v;
+    if (k.startsWith(`${userId}:`)) {
+      budgetsMap[k.replace(`${userId}:`, '')] = v;
     }
   });
 
