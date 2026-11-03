@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Wallet, LogIn, UserPlus, Lock, Mail, User, Eye, EyeOff, ShieldCheck, Sparkles } from 'lucide-react';
+import { LogIn, UserPlus, Lock, Mail, User, Eye, EyeOff, ShieldCheck, Sparkles } from 'lucide-react';
 import { User as UserType } from '@/lib/types';
 
 interface AuthModalProps {
@@ -217,9 +217,11 @@ export function AuthModal({ onLoginSuccess }: AuthModalProps) {
         <div className="p-8 pb-6 bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white text-center relative overflow-hidden">
           <div className="absolute top-0 right-0 -mr-12 -mt-12 w-48 h-48 bg-blue-500/10 rounded-full blur-2xl pointer-events-none" />
 
-          <div className="w-14 h-14 mx-auto bg-gradient-to-tr from-blue-600 via-blue-500 to-emerald-400 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-blue-500/30 mb-3.5">
-            <Wallet className="w-7 h-7" />
-          </div>
+          <img
+            src="/icon-192.png"
+            alt="DompetKu"
+            className="w-14 h-14 mx-auto rounded-2xl shadow-xl shadow-blue-500/30 object-cover mb-3.5 border border-white/20"
+          />
 
           <h2 className="text-2xl font-black tracking-tight">
             Dompet<span className="text-blue-400">Ku</span>

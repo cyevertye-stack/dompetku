@@ -588,8 +588,13 @@ export default function DompetKuApp() {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-slate-900 text-white">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm font-bold tracking-wider uppercase text-slate-300">
+          <img
+            src="/icon-192.png"
+            alt="DompetKu"
+            className="w-16 h-16 rounded-2xl shadow-xl shadow-blue-500/20 object-cover border border-white/10 animate-pulse"
+          />
+          <div className="w-8 h-8 border-3 border-blue-500 border-t-transparent rounded-full animate-spin mt-1" />
+          <p className="text-xs font-bold tracking-wider uppercase text-slate-400">
             Memuat DompetKu...
           </p>
         </div>

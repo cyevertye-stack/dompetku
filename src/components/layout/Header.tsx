@@ -41,15 +41,17 @@ export function Header({
       {/* Brand logo for mobile (sidebar handles desktop) */}
       <div className="flex items-center gap-3">
         <div className="lg:hidden flex items-center gap-2.5">
-          <div className="w-9 h-9 bg-gradient-to-tr from-blue-700 via-blue-600 to-emerald-500 rounded-xl flex items-center justify-center text-white shadow-md shadow-blue-500/20">
-            <Wallet className="w-5 h-5" />
-          </div>
+          <img
+            src="/icon-192.png"
+            alt="DompetKu"
+            className="w-9 h-9 rounded-xl shadow-md shadow-blue-500/20 object-cover border border-slate-200 dark:border-slate-700"
+          />
           <div>
             <h1 className="text-base font-black tracking-tight text-slate-900 dark:text-white leading-none">
               Dompet<span className="text-blue-600 dark:text-blue-400">Ku</span>
             </h1>
             <p className="text-[10px] text-slate-400 font-semibold tracking-wide mt-0.5">
-              Personal Expense Tracker
+              Personal Finance
             </p>
           </div>
         </div>

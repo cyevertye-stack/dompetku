@@ -90,15 +90,17 @@ export function Sidebar({
       {/* Brand Header */}
       <div className="p-6 pb-4 flex items-center justify-between border-b border-slate-800/80">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-tr from-blue-600 via-blue-500 to-emerald-400 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
-            <Wallet className="w-5 h-5" />
-          </div>
+          <img
+            src="/icon-192.png"
+            alt="DompetKu"
+            className="w-10 h-10 rounded-xl shadow-lg shadow-blue-500/20 object-cover border border-slate-700/60"
+          />
           <div>
             <h2 className="text-lg font-black tracking-tight text-white leading-none">
               Dompet<span className="text-blue-400">Ku</span>
             </h2>
             <p className="text-[11px] text-slate-400 font-semibold tracking-wider uppercase mt-1">
-              Expense Tracker
+              Personal Finance
             </p>
           </div>
         </div>
