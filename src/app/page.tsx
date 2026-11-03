@@ -13,6 +13,8 @@ import {
 import {
   Category,
   DashboardMetrics,
+  GoldSavings,
+  GoldTransaction,
   PaymentMethod,
   SavingsGoal,
   SavingsTransaction,
@@ -66,6 +68,10 @@ export default function DompetKuApp() {
   const [savingsTransactions, setSavingsTransactions] = useState<SavingsTransaction[]>([]);
   const [totalSavings, setTotalSavings] = useState<number>(0);
   const [savingsThisMonth, setSavingsThisMonth] = useState<number>(0);
+  const [goldSavings, setGoldSavings] = useState<GoldSavings[]>([]);
+  const [goldTransactions, setGoldTransactions] = useState<GoldTransaction[]>([]);
+  const [totalGoldGrams, setTotalGoldGrams] = useState<number>(0);
+  const [totalGoldEstimatedValue, setTotalGoldEstimatedValue] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
 
   // Modals & Dialog State
@@ -130,6 +136,10 @@ export default function DompetKuApp() {
         setSavingsTransactions(savingsData.data.transactions || []);
         setTotalSavings(savingsData.data.totalSavings || 0);
         setSavingsThisMonth(savingsData.data.savingsThisMonth || 0);
+        setGoldSavings(savingsData.data.goldSavings || []);
+        setGoldTransactions(savingsData.data.goldTransactions || []);
+        setTotalGoldGrams(savingsData.data.totalGoldGrams || 0);
+        setTotalGoldEstimatedValue(savingsData.data.totalGoldEstimatedValue || 0);
       }
     } catch (error) {
       console.error('Error loading DompetKu data:', error);
@@ -201,6 +211,10 @@ export default function DompetKuApp() {
     setSavingsTransactions([]);
     setTotalSavings(0);
     setSavingsThisMonth(0);
+    setGoldSavings([]);
+    setGoldTransactions([]);
+    setTotalGoldGrams(0);
+    setTotalGoldEstimatedValue(0);
   };
 
   // Dashboard Metrics Calculation
@@ -263,8 +277,10 @@ export default function DompetKuApp() {
       comparisonAmount,
       totalSavings,
       savingsThisMonth,
+      totalGoldGrams,
+      totalGoldEstimatedValue,
     };
-  }, [transactions, categories, monthlyBudgets, currentMonth, prevMonth, todayStr, sevenDaysAgoStr, totalSavings, savingsThisMonth]);
+  }, [transactions, categories, monthlyBudgets, currentMonth, prevMonth, todayStr, sevenDaysAgoStr, totalSavings, savingsThisMonth, totalGoldGrams, totalGoldEstimatedValue]);
 
   // Filtered transactions for the Transaksi tab
   const filteredTransactions = useMemo(() => {
@@ -715,6 +731,10 @@ export default function DompetKuApp() {
                 transactions={savingsTransactions}
                 totalSavings={totalSavings}
                 savingsThisMonth={savingsThisMonth}
+                goldSavings={goldSavings}
+                goldTransactions={goldTransactions}
+                totalGoldGrams={totalGoldGrams}
+                totalGoldEstimatedValue={totalGoldEstimatedValue}
                 userId={currentUser?.id}
                 onRefresh={() => loadData(currentUser?.id)}
               />

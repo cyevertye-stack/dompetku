@@ -147,7 +147,7 @@ export function SummaryCards({ metrics, onOpenBudgetModal, onOpenSavings }: Summ
       >
         <div className="flex items-center justify-between">
           <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
-            Uang yang Ditabung
+            Tabungan & Emas
           </span>
           <div className="p-2.5 bg-emerald-100 dark:bg-emerald-950/70 text-emerald-600 dark:text-emerald-400 rounded-xl group-hover:scale-110 transition-transform">
             <PiggyBank className="w-5 h-5" />
@@ -157,7 +157,11 @@ export function SummaryCards({ metrics, onOpenBudgetModal, onOpenSavings }: Summ
           {formatRupiah(metrics.totalSavings || 0)}
         </div>
         <div className="mt-2.5 flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-400 font-semibold">
-          <span>+{formatRupiah(metrics.savingsThisMonth || 0)} bulan ini</span>
+          <span>
+            {metrics.totalGoldGrams && metrics.totalGoldGrams > 0
+              ? `+ ${metrics.totalGoldGrams} gr Emas`
+              : `+${formatRupiah(metrics.savingsThisMonth || 0)} bln ini`}
+          </span>
           <span className="text-[11px] underline opacity-80 group-hover:opacity-100">Kelola &rarr;</span>
         </div>
       </div>

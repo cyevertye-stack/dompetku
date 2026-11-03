@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
+  deleteGoldSavings,
+  deleteGoldTransaction,
   deleteSavingsGoal,
   deleteSavingsTransaction,
+  getGoldSavings,
+  getGoldTransactions,
   getSavingsGoals,
   getSavingsTransactions,
+  saveGoldSavings,
+  saveGoldTransaction,
   saveSavingsGoal,
   saveSavingsTransaction,
 } from '@/lib/storage';
@@ -14,14 +20,16 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId') || undefined;
 
-    const [goals, transactions] = await Promise.all([
+    const [goals, transactions, goldSavings, goldTransactions] = await Promise.all([
       getSavingsGoals(userId),
       getSavingsTransactions(userId),
+      getGoldSavings(userId),
+      getGoldTransactions(userId),
     ]);
 
     const currentMonth = getCurrentMonthString();
 
-    // Total Saldo Tabungan (Deposit - Withdraw)
+    // Total Saldo Tabungan Uang (Deposit - Withdraw)
     const totalSavings = transactions.reduce((acc, t) => {
       return t.type === 'deposit' ? acc + t.amount : acc - t.amount;
     }, 0);
@@ -31,6 +39,15 @@ export async function GET(request: NextRequest) {
       .filter((t) => t.type === 'deposit' && t.date.startsWith(currentMonth))
       .reduce((acc, t) => acc + t.amount, 0);
 
+    // Total Gram Emas
+    const totalGoldGrams = goldSavings.reduce((acc, g) => acc + (g.weightGrams || 0), 0);
+
+    // Total Nilai Emas (Estimasi atau Modal Beli)
+    const totalGoldEstimatedValue = goldSavings.reduce((acc, g) => {
+      const priceGram = g.currentEstimatedPricePerGram || g.pricePerGram || 1500000;
+      return acc + (g.weightGrams * priceGram);
+    }, 0);
+
     return NextResponse.json({
       success: true,
       data: {
@@ -38,6 +55,10 @@ export async function GET(request: NextRequest) {
         transactions,
         totalSavings: Math.max(0, totalSavings),
         savingsThisMonth,
+        goldSavings,
+        goldTransactions,
+        totalGoldGrams: Math.round(totalGoldGrams * 1000) / 1000,
+        totalGoldEstimatedValue,
       },
     });
   } catch (error: any) {
@@ -51,8 +72,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { action, goal, transaction, userId } = body;
+    const { action, goal, transaction, gold, goldTx, userId } = body;
 
+    // 1. Simpan Target Impian
     if (action === 'goal') {
       if (!goal || !goal.title || typeof goal.targetAmount !== 'number') {
         return NextResponse.json(
@@ -67,6 +89,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, data: savedGoal });
     }
 
+    // 2. Simpan Transaksi Tabungan Uang
     if (action === 'transaction' || (!action && transaction)) {
       const tx = transaction || body;
       if (!tx || typeof tx.amount !== 'number' || tx.amount <= 0) {
@@ -80,6 +103,36 @@ export async function POST(request: NextRequest) {
         userId: userId || tx.userId,
       });
       return NextResponse.json({ success: true, data: savedTx });
+    }
+
+    // 3. Simpan Kepemilikan Emas (Gold Savings)
+    if (action === 'gold') {
+      if (!gold || !gold.type || !gold.karat || typeof gold.weightGrams !== 'number' || gold.weightGrams <= 0) {
+        return NextResponse.json(
+          { success: false, error: 'Data tabungan emas tidak valid (tipe, karat, dan berat gram harus diisi)' },
+          { status: 400 }
+        );
+      }
+      const savedGold = await saveGoldSavings({
+        ...gold,
+        userId: userId || gold.userId,
+      });
+      return NextResponse.json({ success: true, data: savedGold });
+    }
+
+    // 4. Simpan Transaksi Jual/Beli Emas
+    if (action === 'gold_transaction') {
+      if (!goldTx || !goldTx.goldType || typeof goldTx.weightGrams !== 'number' || goldTx.weightGrams <= 0) {
+        return NextResponse.json(
+          { success: false, error: 'Data transaksi emas tidak lengkap' },
+          { status: 400 }
+        );
+      }
+      const savedGoldTx = await saveGoldTransaction({
+        ...goldTx,
+        userId: userId || goldTx.userId,
+      });
+      return NextResponse.json({ success: true, data: savedGoldTx });
     }
 
     return NextResponse.json(
@@ -111,6 +164,16 @@ export async function DELETE(request: NextRequest) {
     if (type === 'goal') {
       await deleteSavingsGoal(id, userId);
       return NextResponse.json({ success: true, message: 'Target berhasil dihapus' });
+    }
+
+    if (type === 'gold') {
+      await deleteGoldSavings(id, userId);
+      return NextResponse.json({ success: true, message: 'Koleksi emas berhasil dihapus' });
+    }
+
+    if (type === 'gold_transaction') {
+      await deleteGoldTransaction(id, userId);
+      return NextResponse.json({ success: true, message: 'Transaksi emas berhasil dihapus' });
     }
 
     await deleteSavingsTransaction(id, userId);

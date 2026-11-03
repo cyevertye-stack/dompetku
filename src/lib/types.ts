@@ -47,6 +47,49 @@ export interface SavingsTransaction {
   createdAt: string;
 }
 
+export type GoldType =
+  | 'Antam'
+  | 'UBS'
+  | 'Galeri 24'
+  | 'Emas Digital'
+  | 'Perhiasan'
+  | 'Lotus Archi'
+  | 'Dinar / Koin Emas'
+  | 'Lainnya';
+
+export type GoldKarat = '24K' | '22K' | '18K' | '16K' | '14K' | '10K';
+
+export interface GoldSavings {
+  id: string;
+  userId?: string;
+  type: GoldType;
+  karat: GoldKarat;
+  weightGrams: number;
+  purchasePrice: number;
+  pricePerGram: number;
+  currentEstimatedPricePerGram?: number;
+  purchaseDate: string; // YYYY-MM-DD
+  storageLocation?: string;
+  serialNumber?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GoldTransaction {
+  id: string;
+  userId?: string;
+  goldId?: string;
+  type: 'buy' | 'sell';
+  goldType: GoldType;
+  karat: GoldKarat;
+  weightGrams: number;
+  totalPrice: number;
+  date: string;
+  notes?: string;
+  createdAt: string;
+}
+
 export interface Transaction {
   id: string;
   userId?: string;
@@ -73,6 +116,8 @@ export interface AppState {
   monthlyBudgets: Record<string, number>; // key: "userId:YYYY-MM" or "YYYY-MM"
   savingsGoals?: SavingsGoal[];
   savingsTransactions?: SavingsTransaction[];
+  goldSavings?: GoldSavings[];
+  goldTransactions?: GoldTransaction[];
 }
 
 export interface TransactionFilter {
@@ -100,4 +145,6 @@ export interface DashboardMetrics {
   comparisonAmount: number;
   totalSavings?: number;
   savingsThisMonth?: number;
+  totalGoldGrams?: number;
+  totalGoldEstimatedValue?: number;
 }

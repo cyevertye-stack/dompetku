@@ -3,6 +3,8 @@ import path from 'path';
 import {
   AppState,
   Category,
+  GoldSavings,
+  GoldTransaction,
   MonthlyBudget,
   SavingsGoal,
   SavingsTransaction,
@@ -23,6 +25,8 @@ function getDefaultState(): AppState {
     monthlyBudgets: {},
     savingsGoals: [],
     savingsTransactions: [],
+    goldSavings: [],
+    goldTransactions: [],
   };
 }
 
@@ -46,6 +50,8 @@ function ensureDataFile(): AppState {
     if (!parsed.monthlyBudgets) parsed.monthlyBudgets = {};
     if (!parsed.savingsGoals) parsed.savingsGoals = [];
     if (!parsed.savingsTransactions) parsed.savingsTransactions = [];
+    if (!parsed.goldSavings) parsed.goldSavings = [];
+    if (!parsed.goldTransactions) parsed.goldTransactions = [];
 
     return parsed;
   } catch (error) {
@@ -774,6 +780,210 @@ export async function deleteSavingsTransaction(id: string, userId?: string): Pro
       }
     }
     state.savingsTransactions = state.savingsTransactions.filter((s) => s.id !== id);
+    saveData(state);
+  }
+  return true;
+}
+
+// -------------------------------------------------------------
+// TABUNGAN EMAS (GOLD SAVINGS & LOGAM MULIA)
+// -------------------------------------------------------------
+
+export async function getGoldSavings(userId?: string): Promise<GoldSavings[]> {
+  if (hasSupabaseConfig) {
+    try {
+      let query = supabase.from('gold_savings').select('*').order('purchase_date', { ascending: false });
+      if (userId) query = query.eq('user_id', userId);
+      const { data, error } = await query;
+      if (!error && Array.isArray(data)) {
+        return data.map((row) => ({
+          id: row.id,
+          userId: row.user_id,
+          type: row.type,
+          karat: row.karat,
+          weightGrams: Number(row.weight_grams) || 0,
+          purchasePrice: Number(row.purchase_price) || 0,
+          pricePerGram: Number(row.price_per_gram) || 0,
+          currentEstimatedPricePerGram: Number(row.current_estimated_price_per_gram) || undefined,
+          purchaseDate: typeof row.purchase_date === 'string' ? row.purchase_date.split('T')[0] : row.purchase_date,
+          storageLocation: row.storage_location || '',
+          serialNumber: row.serial_number || '',
+          notes: row.notes || '',
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+        }));
+      }
+    } catch (e) {
+      // fallback
+    }
+  }
+
+  const state = ensureDataFile();
+  const list = state.goldSavings || [];
+  if (userId) {
+    return list.filter((g) => g.userId === userId || !g.userId);
+  }
+  return list;
+}
+
+export async function saveGoldSavings(item: GoldSavings): Promise<GoldSavings> {
+  const now = new Date().toISOString();
+  const pricePerGram =
+    item.pricePerGram > 0
+      ? item.pricePerGram
+      : item.weightGrams > 0
+      ? Math.round(item.purchasePrice / item.weightGrams)
+      : 0;
+
+  const toSave: GoldSavings = {
+    ...item,
+    id: item.id || `gold-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    pricePerGram,
+    createdAt: item.createdAt || now,
+    updatedAt: now,
+  };
+
+  if (hasSupabaseConfig) {
+    try {
+      await supabase.from('gold_savings').upsert({
+        id: toSave.id,
+        user_id: toSave.userId || null,
+        type: toSave.type,
+        karat: toSave.karat,
+        weight_grams: toSave.weightGrams,
+        purchase_price: toSave.purchasePrice,
+        price_per_gram: toSave.pricePerGram,
+        current_estimated_price_per_gram: toSave.currentEstimatedPricePerGram || null,
+        purchase_date: toSave.purchaseDate,
+        storage_location: toSave.storageLocation || null,
+        serial_number: toSave.serialNumber || null,
+        notes: toSave.notes || null,
+        updated_at: toSave.updatedAt,
+      });
+    } catch (e) {
+      // fallback
+    }
+  }
+
+  const state = ensureDataFile();
+  if (!state.goldSavings) state.goldSavings = [];
+  const idx = state.goldSavings.findIndex((g) => g.id === toSave.id);
+  if (idx >= 0) {
+    state.goldSavings[idx] = toSave;
+  } else {
+    state.goldSavings.unshift(toSave);
+  }
+  saveData(state);
+  return toSave;
+}
+
+export async function deleteGoldSavings(id: string, userId?: string): Promise<boolean> {
+  if (hasSupabaseConfig) {
+    try {
+      let query = supabase.from('gold_savings').delete().eq('id', id);
+      if (userId) query = query.eq('user_id', userId);
+      await query;
+    } catch (e) {
+      // fallback
+    }
+  }
+
+  const state = ensureDataFile();
+  if (state.goldSavings) {
+    state.goldSavings = state.goldSavings.filter((g) => g.id !== id);
+    saveData(state);
+  }
+  return true;
+}
+
+export async function getGoldTransactions(userId?: string): Promise<GoldTransaction[]> {
+  if (hasSupabaseConfig) {
+    try {
+      let query = supabase.from('gold_transactions').select('*').order('date', { ascending: false });
+      if (userId) query = query.eq('user_id', userId);
+      const { data, error } = await query;
+      if (!error && Array.isArray(data)) {
+        return data.map((row) => ({
+          id: row.id,
+          userId: row.user_id,
+          goldId: row.gold_id || undefined,
+          type: row.type as 'buy' | 'sell',
+          goldType: row.gold_type,
+          karat: row.karat,
+          weightGrams: Number(row.weight_grams) || 0,
+          totalPrice: Number(row.total_price) || 0,
+          date: typeof row.date === 'string' ? row.date.split('T')[0] : row.date,
+          notes: row.notes || '',
+          createdAt: row.created_at,
+        }));
+      }
+    } catch (e) {
+      // fallback
+    }
+  }
+
+  const state = ensureDataFile();
+  const list = state.goldTransactions || [];
+  if (userId) {
+    return list.filter((g) => g.userId === userId || !g.userId);
+  }
+  return list;
+}
+
+export async function saveGoldTransaction(tx: GoldTransaction): Promise<GoldTransaction> {
+  const now = new Date().toISOString();
+  const toSave: GoldTransaction = {
+    ...tx,
+    id: tx.id || `gtx-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    createdAt: tx.createdAt || now,
+  };
+
+  if (hasSupabaseConfig) {
+    try {
+      await supabase.from('gold_transactions').upsert({
+        id: toSave.id,
+        user_id: toSave.userId || null,
+        gold_id: toSave.goldId || null,
+        type: toSave.type,
+        gold_type: toSave.goldType,
+        karat: toSave.karat,
+        weight_grams: toSave.weightGrams,
+        total_price: toSave.totalPrice,
+        date: toSave.date,
+        notes: toSave.notes || null,
+        created_at: toSave.createdAt,
+      });
+    } catch (e) {
+      // fallback
+    }
+  }
+
+  const state = ensureDataFile();
+  if (!state.goldTransactions) state.goldTransactions = [];
+  const idx = state.goldTransactions.findIndex((g) => g.id === toSave.id);
+  if (idx >= 0) {
+    state.goldTransactions[idx] = toSave;
+  } else {
+    state.goldTransactions.unshift(toSave);
+  }
+  saveData(state);
+  return toSave;
+}
+
+export async function deleteGoldTransaction(id: string, userId?: string): Promise<boolean> {
+  if (hasSupabaseConfig) {
+    try {
+      let query = supabase.from('gold_transactions').delete().eq('id', id);
+      if (userId) query = query.eq('user_id', userId);
+      await query;
+    } catch (e) {
+      // fallback
+    }
+  }
+
+  const state = ensureDataFile();
+  if (state.goldTransactions) {
+    state.goldTransactions = state.goldTransactions.filter((g) => g.id !== id);
     saveData(state);
   }
   return true;
