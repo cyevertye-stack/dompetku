@@ -154,15 +154,15 @@ export default function DompetKuApp() {
         setMonthlyBudgets(localCached.monthlyBudgets);
       }
 
-      if (savingsData.success) {
-        setSavingsGoals(savingsData.data.goals || localCached?.savingsGoals || []);
-        setSavingsTransactions(savingsData.data.transactions || localCached?.savingsTransactions || []);
-        setTotalSavings(savingsData.data.totalSavings ?? localCached?.totalSavings ?? 0);
-        setSavingsThisMonth(savingsData.data.savingsThisMonth ?? localCached?.savingsThisMonth ?? 0);
-        setGoldSavings(savingsData.data.goldSavings || localCached?.goldSavings || []);
-        setGoldTransactions(savingsData.data.goldTransactions || localCached?.goldTransactions || []);
-        setTotalGoldGrams(savingsData.data.totalGoldGrams ?? localCached?.totalGoldGrams ?? 0);
-        setTotalGoldEstimatedValue(savingsData.data.totalGoldEstimatedValue ?? localCached?.totalGoldEstimatedValue ?? 0);
+      if (savingsData.success && savingsData.data) {
+        setSavingsGoals(Array.isArray(savingsData.data.goals) ? savingsData.data.goals : (localCached?.savingsGoals || []));
+        setSavingsTransactions(Array.isArray(savingsData.data.transactions) ? savingsData.data.transactions : (localCached?.savingsTransactions || []));
+        setTotalSavings(typeof savingsData.data.totalSavings === 'number' ? savingsData.data.totalSavings : (localCached?.totalSavings ?? 0));
+        setSavingsThisMonth(typeof savingsData.data.savingsThisMonth === 'number' ? savingsData.data.savingsThisMonth : (localCached?.savingsThisMonth ?? 0));
+        setGoldSavings(Array.isArray(savingsData.data.goldSavings) ? savingsData.data.goldSavings : (localCached?.goldSavings || []));
+        setGoldTransactions(Array.isArray(savingsData.data.goldTransactions) ? savingsData.data.goldTransactions : (localCached?.goldTransactions || []));
+        setTotalGoldGrams(typeof savingsData.data.totalGoldGrams === 'number' ? savingsData.data.totalGoldGrams : (localCached?.totalGoldGrams ?? 0));
+        setTotalGoldEstimatedValue(typeof savingsData.data.totalGoldEstimatedValue === 'number' ? savingsData.data.totalGoldEstimatedValue : (localCached?.totalGoldEstimatedValue ?? 0));
       } else if (localCached) {
         setSavingsGoals(localCached.savingsGoals || []);
         setSavingsTransactions(localCached.savingsTransactions || []);

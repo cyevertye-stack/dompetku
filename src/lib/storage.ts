@@ -649,9 +649,7 @@ export async function saveSavingsGoal(goal: SavingsGoal): Promise<SavingsGoal> {
 export async function deleteSavingsGoal(id: string, userId?: string): Promise<boolean> {
   if (hasSupabaseConfig) {
     try {
-      let query = supabase.from('savings_goals').delete().eq('id', id);
-      if (userId) query = query.eq('user_id', userId);
-      await query;
+      await supabase.from('savings_goals').delete().eq('id', id);
     } catch (e) {
       // fallback
     }
@@ -754,9 +752,7 @@ export async function saveSavingsTransaction(tx: SavingsTransaction): Promise<Sa
 export async function deleteSavingsTransaction(id: string, userId?: string): Promise<boolean> {
   if (hasSupabaseConfig) {
     try {
-      let query = supabase.from('savings_transactions').delete().eq('id', id);
-      if (userId) query = query.eq('user_id', userId);
-      await query;
+      await supabase.from('savings_transactions').delete().eq('id', id);
     } catch (e) {
       // fallback
     }
@@ -885,9 +881,7 @@ export async function saveGoldSavings(item: GoldSavings): Promise<GoldSavings> {
 export async function deleteGoldSavings(id: string, userId?: string): Promise<boolean> {
   if (hasSupabaseConfig) {
     try {
-      let query = supabase.from('gold_savings').delete().eq('id', id);
-      if (userId) query = query.eq('user_id', userId);
-      await query;
+      await supabase.from('gold_savings').delete().eq('id', id);
     } catch (e) {
       // fallback
     }
@@ -978,9 +972,7 @@ export async function saveGoldTransaction(tx: GoldTransaction): Promise<GoldTran
 export async function deleteGoldTransaction(id: string, userId?: string): Promise<boolean> {
   if (hasSupabaseConfig) {
     try {
-      let query = supabase.from('gold_transactions').delete().eq('id', id);
-      if (userId) query = query.eq('user_id', userId);
-      await query;
+      await supabase.from('gold_transactions').delete().eq('id', id);
     } catch (e) {
       // fallback
     }
