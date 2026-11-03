@@ -671,7 +671,7 @@ export default function DompetKuApp() {
         />
 
         {/* Scrollable Page Views */}
-        <main className="flex-1 overflow-y-auto px-4 sm:px-8 py-6 pb-24 lg:pb-8">
+        <main className="flex-1 overflow-y-auto px-3.5 sm:px-8 py-4 sm:py-6 pb-28 lg:pb-8">
           <div className="max-w-7xl mx-auto space-y-6">
             {/* VIEW 1: DASHBOARD */}
             {activeTab === 'dashboard' && (

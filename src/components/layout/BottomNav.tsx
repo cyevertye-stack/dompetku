@@ -22,15 +22,15 @@ export function BottomNav({
   onOpenAddModal,
 }: BottomNavProps) {
   return (
-    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200/80 dark:border-slate-800 px-2 py-1.5 shadow-lg select-none">
-      <div className="flex items-center justify-around relative">
+    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200/80 dark:border-slate-800 px-3 pt-1.5 pb-4 shadow-xl select-none">
+      <div className="flex items-center justify-between relative max-w-md mx-auto">
         {/* 1. Dashboard */}
         <button
           onClick={() => onTabChange('dashboard')}
-          className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all cursor-pointer ${
+          className={`flex-1 flex flex-col items-center justify-center py-1 rounded-xl transition-all cursor-pointer active:scale-95 ${
             activeTab === 'dashboard'
               ? 'text-blue-600 dark:text-blue-400 font-bold'
-              : 'text-slate-400 font-medium hover:text-slate-600'
+              : 'text-slate-400 dark:text-slate-500 font-medium hover:text-slate-600'
           }`}
         >
           <LayoutDashboard className="w-5 h-5 mb-0.5" />
@@ -40,10 +40,10 @@ export function BottomNav({
         {/* 2. Transactions */}
         <button
           onClick={() => onTabChange('transactions')}
-          className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all cursor-pointer ${
+          className={`flex-1 flex flex-col items-center justify-center py-1 rounded-xl transition-all cursor-pointer active:scale-95 ${
             activeTab === 'transactions'
               ? 'text-blue-600 dark:text-blue-400 font-bold'
-              : 'text-slate-400 font-medium hover:text-slate-600'
+              : 'text-slate-400 dark:text-slate-500 font-medium hover:text-slate-600'
           }`}
         >
           <Receipt className="w-5 h-5 mb-0.5" />
@@ -51,10 +51,10 @@ export function BottomNav({
         </button>
 
         {/* 3. Center FAB: Quick Add Button */}
-        <div className="relative -top-5">
+        <div className="relative -top-4 px-2 shrink-0">
           <button
             onClick={onOpenAddModal}
-            className="w-13 h-13 bg-gradient-to-tr from-blue-700 via-blue-600 to-emerald-500 hover:scale-105 active:scale-95 text-white rounded-full flex items-center justify-center shadow-lg shadow-blue-500/40 border-4 border-white dark:border-slate-900 transition-all cursor-pointer"
+            className="w-12 h-12 bg-gradient-to-tr from-blue-700 via-blue-600 to-emerald-500 hover:scale-105 active:scale-95 text-white rounded-full flex items-center justify-center shadow-lg shadow-blue-500/40 border-4 border-white dark:border-slate-900 transition-all cursor-pointer"
             title="Catat Transaksi Baru (Pemasukan / Pengeluaran)"
           >
             <Plus className="w-6 h-6 stroke-[2.5]" />
@@ -64,10 +64,10 @@ export function BottomNav({
         {/* 4. Tabungan */}
         <button
           onClick={() => onTabChange('savings')}
-          className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all cursor-pointer ${
+          className={`flex-1 flex flex-col items-center justify-center py-1 rounded-xl transition-all cursor-pointer active:scale-95 ${
             activeTab === 'savings'
               ? 'text-emerald-600 dark:text-emerald-400 font-bold'
-              : 'text-slate-400 font-medium hover:text-slate-600'
+              : 'text-slate-400 dark:text-slate-500 font-medium hover:text-slate-600'
           }`}
         >
           <PiggyBank className="w-5 h-5 mb-0.5" />
@@ -77,10 +77,10 @@ export function BottomNav({
         {/* 5. Reports & Excel */}
         <button
           onClick={() => onTabChange('reports')}
-          className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all cursor-pointer ${
+          className={`flex-1 flex flex-col items-center justify-center py-1 rounded-xl transition-all cursor-pointer active:scale-95 ${
             activeTab === 'reports'
               ? 'text-blue-600 dark:text-blue-400 font-bold'
-              : 'text-slate-400 font-medium hover:text-slate-600'
+              : 'text-slate-400 dark:text-slate-500 font-medium hover:text-slate-600'
           }`}
         >
           <FileSpreadsheet className="w-5 h-5 mb-0.5" />
