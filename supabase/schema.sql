@@ -80,7 +80,10 @@ CREATE TABLE IF NOT EXISTS public.gold_savings (
     id TEXT PRIMARY KEY,
     user_id TEXT REFERENCES public.users(id) ON DELETE CASCADE,
     type TEXT NOT NULL, -- 'Antam', 'UBS', 'Galeri 24', 'Emas Digital', 'Perhiasan', dll
-    karat TEXT NOT NULL DEFAULT '24K', -- '24K', '22K', '18K', dll
+    karat TEXT NOT NULL DEFAULT '24K (99.9%)', -- Tulis manual bebas, misal: 'Kadar 700 (17K)', '750', '22K', dll
+    jewelry_type TEXT, -- Khusus perhiasan: 'Cincin', 'Kalung', 'Gelang', 'Anting', 'Liontin', dll
+    item_name TEXT, -- Nama barang / model perhiasan
+    store_name TEXT, -- Toko Emas / Bukti Pembelian
     weight_grams NUMERIC NOT NULL CHECK (weight_grams > 0),
     purchase_price NUMERIC NOT NULL CHECK (purchase_price > 0),
     price_per_gram NUMERIC NOT NULL CHECK (price_per_gram > 0),

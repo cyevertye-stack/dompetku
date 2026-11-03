@@ -663,12 +663,14 @@ export function SavingsView({
                     <div>
                       {/* Top tags */}
                       <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="px-2.5 py-1 bg-amber-500 text-white rounded-lg font-black text-xs shadow-xs">
                             {item.karat}
                           </span>
                           <span className="px-2.5 py-1 bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 rounded-lg font-bold text-xs border border-amber-200 dark:border-amber-800">
-                            {item.type}
+                            {item.type === 'Perhiasan' && item.jewelryType
+                              ? `${item.jewelryType === 'Cincin' ? '💍' : item.jewelryType === 'Kalung' ? '📿' : item.jewelryType === 'Gelang' ? '🪙' : item.jewelryType === 'Anting' ? '✨' : item.jewelryType === 'Liontin' ? '💎' : '👑'} ${item.jewelryType}`
+                              : item.type}
                           </span>
                         </div>
 
@@ -684,11 +686,25 @@ export function SavingsView({
                         </button>
                       </div>
 
+                      {/* Nama Perhiasan / Model jika ada */}
+                      {item.itemName && (
+                        <div className="mt-2.5">
+                          <h4 className="font-black text-sm text-slate-900 dark:text-white leading-tight">
+                            {item.itemName}
+                          </h4>
+                          {item.storeName && (
+                            <span className="text-[11px] text-amber-700 dark:text-amber-400 font-semibold block mt-0.5">
+                              🏪 {item.storeName}
+                            </span>
+                          )}
+                        </div>
+                      )}
+
                       {/* Gramasi Utama */}
                       <div className="mt-4 flex items-baseline justify-between">
                         <div>
                           <span className="text-[11px] text-slate-400 font-semibold uppercase">
-                            Berat Logam Mulia
+                            Berat {item.type === 'Perhiasan' ? 'Perhiasan' : 'Logam Mulia'}
                           </span>
                           <div className="text-2xl font-black text-slate-900 dark:text-white flex items-baseline gap-1">
                             <span>{item.weightGrams}</span>
@@ -734,7 +750,7 @@ export function SavingsView({
                           <div className="flex items-center justify-between">
                             <span className="flex items-center gap-1 text-[11px]">
                               <BadgeCheck className="w-3.5 h-3.5 text-amber-500" />
-                              No. Sertifikat:
+                              No. Surat/Seri:
                             </span>
                             <span className="font-mono font-bold text-slate-700 dark:text-slate-300">
                               {item.serialNumber}

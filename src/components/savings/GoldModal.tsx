@@ -5,16 +5,16 @@ import {
   X,
   Sparkles,
   Calendar,
-  ShieldCheck,
   Scale,
   Award,
-  CircleDollarSign,
   MapPin,
-  FileText,
   BadgeCheck,
+  Gem,
+  Store,
+  Tag,
 } from 'lucide-react';
 import { formatRupiah } from '@/lib/formatters';
-import { GoldKarat, GoldSavings, GoldType } from '@/lib/types';
+import { GoldSavings, GoldType } from '@/lib/types';
 
 interface GoldModalProps {
   isOpen: boolean;
@@ -27,27 +27,40 @@ const GOLD_TYPES: GoldType[] = [
   'Antam',
   'UBS',
   'Galeri 24',
-  'Emas Digital',
   'Perhiasan',
+  'Emas Digital',
   'Lotus Archi',
   'Dinar / Koin Emas',
   'Lainnya',
 ];
 
-const KARAT_OPTIONS: { label: string; value: GoldKarat; purity: string }[] = [
-  { label: '24 Karat (24K)', value: '24K', purity: '99.9% Murni' },
-  { label: '22 Karat (22K)', value: '22K', purity: '~91.6% Emas Tua' },
-  { label: '18 Karat (18K)', value: '18K', purity: '~75% Perhiasan Standar' },
-  { label: '16 Karat (16K)', value: '16K', purity: '~66.6%' },
-  { label: '14 Karat (14K)', value: '14K', purity: '~58.5%' },
-  { label: '10 Karat (10K)', value: '10K', purity: '~41.7% Emas Muda' },
+const JEWELRY_TYPES = [
+  { label: 'Cincin', icon: '💍' },
+  { label: 'Kalung', icon: '📿' },
+  { label: 'Gelang', icon: '🪙' },
+  { label: 'Anting', icon: '✨' },
+  { label: 'Liontin', icon: '💎' },
+  { label: 'Set Perhiasan', icon: '👑' },
+  { label: 'Lainnya', icon: '🏷️' },
 ];
 
-const QUICK_GRAMS = [0.5, 1, 2, 5, 10, 25];
+const KARAT_PRESETS = [
+  { label: '24K (99.9%)', value: '24K (99.9%)' },
+  { label: '22K (91.6%)', value: '22K (91.6%)' },
+  { label: 'Kadar 750 (18K)', value: 'Kadar 750 (18K)' },
+  { label: 'Kadar 700 (17K)', value: 'Kadar 700 (17K)' },
+  { label: 'Kadar 420 (10K)', value: 'Kadar 420 (10K)' },
+  { label: 'Kadar 375 (9K)', value: 'Kadar 375 (9K)' },
+];
+
+const QUICK_GRAMS = [0.5, 1, 2, 3, 5, 10, 25];
 
 export function GoldModal({ isOpen, onClose, onSaveGold, userId }: GoldModalProps) {
   const [goldType, setGoldType] = useState<GoldType>('Antam');
-  const [karat, setKarat] = useState<GoldKarat>('24K');
+  const [karat, setKarat] = useState<string>('24K (99.9%)');
+  const [jewelryType, setJewelryType] = useState<string>('Cincin');
+  const [itemName, setItemName] = useState<string>('');
+  const [storeName, setStoreName] = useState<string>('');
   const [weightGrams, setWeightGrams] = useState<string>('1');
   const [purchasePrice, setPurchasePrice] = useState<string>('');
   const [purchaseDate, setPurchaseDate] = useState<string>(new Date().toISOString().split('T')[0]);
@@ -61,7 +74,10 @@ export function GoldModal({ isOpen, onClose, onSaveGold, userId }: GoldModalProp
   useEffect(() => {
     if (isOpen) {
       setGoldType('Antam');
-      setKarat('24K');
+      setKarat('24K (99.9%)');
+      setJewelryType('Cincin');
+      setItemName('');
+      setStoreName('');
       setWeightGrams('1');
       setPurchasePrice('');
       setPurchaseDate(new Date().toISOString().split('T')[0]);
@@ -78,9 +94,24 @@ export function GoldModal({ isOpen, onClose, onSaveGold, userId }: GoldModalProp
   const numPrice = parseInt(purchasePrice.replace(/[^0-9]/g, ''), 10) || 0;
   const pricePerGram = numGrams > 0 && numPrice > 0 ? Math.round(numPrice / numGrams) : 0;
 
+  const handleTypeSelect = (t: GoldType) => {
+    setGoldType(t);
+    if (t === 'Antam' || t === 'UBS' || t === 'Galeri 24') {
+      setKarat('24K (99.9%)');
+    } else if (t === 'Perhiasan') {
+      setKarat('Kadar 750 (18K)');
+      if (!itemName) setItemName('Cincin Emas');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (!karat.trim()) {
+      setError('Masukkan kadar atau karat emas (bisa ditulis manual)');
+      return;
+    }
 
     if (numGrams <= 0) {
       setError('Masukkan berat emas dalam gram yang valid');
@@ -97,7 +128,10 @@ export function GoldModal({ isOpen, onClose, onSaveGold, userId }: GoldModalProp
       await onSaveGold({
         userId,
         type: goldType,
-        karat,
+        karat: karat.trim(),
+        jewelryType: goldType === 'Perhiasan' ? jewelryType : undefined,
+        itemName: goldType === 'Perhiasan' ? itemName.trim() : undefined,
+        storeName: storeName.trim() || undefined,
         weightGrams: numGrams,
         purchasePrice: numPrice,
         pricePerGram,
@@ -129,7 +163,7 @@ export function GoldModal({ isOpen, onClose, onSaveGold, userId }: GoldModalProp
                 <Sparkles className="w-4 h-4 text-amber-500" />
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Simpan Logam Mulia (Antam, UBS), Emas Digital, atau Perhiasan
+                Logam Mulia (Antam, UBS), Perhiasan Emas, atau Emas Digital
               </p>
             </div>
           </div>
@@ -153,52 +187,126 @@ export function GoldModal({ isOpen, onClose, onSaveGold, userId }: GoldModalProp
           {/* Tipe Emas */}
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-              Tipe / Merk Emas *
+              Tipe / Bentuk Emas *
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {GOLD_TYPES.map((t) => (
                 <button
                   key={t}
                   type="button"
-                  onClick={() => {
-                    setGoldType(t);
-                    if (t === 'Antam' || t === 'UBS' || t === 'Galeri 24') {
-                      setKarat('24K');
-                    }
-                  }}
+                  onClick={() => handleTypeSelect(t)}
                   className={`py-2 px-2.5 rounded-xl text-xs font-bold transition-all border text-center cursor-pointer ${
                     goldType === t
                       ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
                       : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-amber-400'
                   }`}
                 >
-                  {t}
+                  {t === 'Perhiasan' ? '💎 Perhiasan' : t}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Karat Emas */}
+          {/* KHUSUS PERHIASAN: Jenis Perhiasan & Nama Model */}
+          {goldType === 'Perhiasan' && (
+            <div className="p-4 bg-amber-50/50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 rounded-2xl space-y-3 animate-in fade-in">
+              <div className="flex items-center gap-1.5 text-amber-800 dark:text-amber-300 font-bold text-xs">
+                <Gem className="w-4 h-4 text-amber-500" />
+                <span>Rincian Perhiasan Emas</span>
+              </div>
+
+              {/* Jenis Perhiasan */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                  Jenis Barang
+                </label>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {JEWELRY_TYPES.map((j) => (
+                    <button
+                      key={j.label}
+                      type="button"
+                      onClick={() => setJewelryType(j.label)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border cursor-pointer flex items-center gap-1 ${
+                        jewelryType === j.label
+                          ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
+                          : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
+                      }`}
+                    >
+                      <span>{j.icon}</span>
+                      <span>{j.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Nama Barang / Model */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                  Nama / Model Perhiasan
+                </label>
+                <input
+                  type="text"
+                  placeholder="Misal: Cincin Solitaire Permata, Kalung Rantai Nori"
+                  value={itemName}
+                  onChange={(e) => setItemName(e.target.value)}
+                  className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm font-semibold text-slate-800 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-amber-500"
+                />
+              </div>
+
+              {/* Toko Emas / Surat Pembelian */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                  Toko Emas / Bukti Surat
+                </label>
+                <div className="relative">
+                  <Store className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Misal: Toko Emas Semar Nusantara / Ada Surat"
+                    value={storeName}
+                    onChange={(e) => setStoreName(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm text-slate-800 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-amber-500"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* KADAR / KARAT EMAS (BISA TULIS MANUAL & ADA CHIP PILIHAN CEPAT) */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center justify-between">
-              <span>Kadar Karat Emas *</span>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
+              <span>Kadar Karat Emas (Bisa Tulis Manual) *</span>
               <span className="text-[11px] font-semibold text-amber-600 dark:text-amber-400">
-                {KARAT_OPTIONS.find((k) => k.value === karat)?.purity}
+                Ketik bebas atau klik pilihan di bawah
               </span>
             </label>
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-              {KARAT_OPTIONS.map((k) => (
+            <div className="relative">
+              <Award className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-amber-500" />
+              <input
+                type="text"
+                required
+                placeholder="Misal: Kadar 70%, Kadar 750, 17K, 22K, 99.9%, dll."
+                value={karat}
+                onChange={(e) => setKarat(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-amber-500"
+              />
+            </div>
+
+            {/* Quick Suggestion Chips */}
+            <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+              <span className="text-[11px] text-slate-400 font-semibold mr-1">Rekomendasi:</span>
+              {KARAT_PRESETS.map((p) => (
                 <button
-                  key={k.value}
+                  key={p.value}
                   type="button"
-                  onClick={() => setKarat(k.value)}
-                  className={`py-2 rounded-xl text-xs font-bold transition-all border text-center cursor-pointer ${
-                    karat === k.value
-                      ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
-                      : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-amber-400'
+                  onClick={() => setKarat(p.value)}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all border cursor-pointer ${
+                    karat === p.value
+                      ? 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700 shadow-2xs'
+                      : 'bg-slate-100 dark:bg-slate-800 hover:bg-amber-50 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'
                   }`}
                 >
-                  {k.value}
+                  {p.label}
                 </button>
               ))}
             </div>
@@ -296,7 +404,7 @@ export function GoldModal({ isOpen, onClose, onSaveGold, userId }: GoldModalProp
               </label>
               <input
                 type="text"
-                placeholder="Misal: Brankas Rumah / Pegadaian"
+                placeholder="Misal: Brankas Rumah / Kotak Perhiasan"
                 value={storageLocation}
                 onChange={(e) => setStorageLocation(e.target.value)}
                 className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm text-slate-800 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-amber-500"
@@ -304,11 +412,11 @@ export function GoldModal({ isOpen, onClose, onSaveGold, userId }: GoldModalProp
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                No. Seri Sertifikat (Opsional)
+                No. Sertifikat / No. Nota (Opsional)
               </label>
               <input
                 type="text"
-                placeholder="Misal: AB-982736"
+                placeholder="Misal: AB-982736 / Nota-012"
                 value={serialNumber}
                 onChange={(e) => setSerialNumber(e.target.value)}
                 className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm text-slate-800 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-amber-500"
@@ -323,7 +431,7 @@ export function GoldModal({ isOpen, onClose, onSaveGold, userId }: GoldModalProp
             </label>
             <textarea
               rows={2}
-              placeholder="Misal: Hadiah ulang tahun, beli saat promo diskon, dll."
+              placeholder="Misal: Mas kawin, hadiah ulang tahun, ada batu permata, dll."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm text-slate-800 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-amber-500 resize-none"

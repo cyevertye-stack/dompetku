@@ -57,13 +57,16 @@ export type GoldType =
   | 'Dinar / Koin Emas'
   | 'Lainnya';
 
-export type GoldKarat = '24K' | '22K' | '18K' | '16K' | '14K' | '10K';
+export type GoldKarat = string;
 
 export interface GoldSavings {
   id: string;
   userId?: string;
   type: GoldType;
-  karat: GoldKarat;
+  karat: string; // Tulis manual, misal: "24K (99.9%)", "Kadar 750 (18K)", "Kadar 700 (17K)", "375 (9K)", dll.
+  jewelryType?: string; // Cincin, Kalung, Gelang, Anting, Liontin, dll.
+  itemName?: string; // Nama perhiasan / model barang
+  storeName?: string; // Toko Emas / Surat Emas
   weightGrams: number;
   purchasePrice: number;
   pricePerGram: number;
@@ -82,7 +85,7 @@ export interface GoldTransaction {
   goldId?: string;
   type: 'buy' | 'sell';
   goldType: GoldType;
-  karat: GoldKarat;
+  karat: string;
   weightGrams: number;
   totalPrice: number;
   date: string;
