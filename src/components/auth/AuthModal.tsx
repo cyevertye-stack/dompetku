@@ -8,6 +8,47 @@ interface AuthModalProps {
   onLoginSuccess: (user: UserType) => void;
 }
 
+interface CachedAccount {
+  id: string;
+  name: string;
+  email: string;
+  passwordHash: string;
+  createdAt: string;
+}
+
+async function browserHash(text: string): Promise<string> {
+  try {
+    const msgUint8 = new TextEncoder().encode(text + 'dompetku_salt_2026');
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+  } catch (e) {
+    return btoa(text);
+  }
+}
+
+function getLocalAccounts(): CachedAccount[] {
+  try {
+    const raw = localStorage.getItem('dompetku-accounts');
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveLocalAccount(account: CachedAccount): void {
+  try {
+    const accounts = getLocalAccounts();
+    const idx = accounts.findIndex((a) => a.email.toLowerCase() === account.email.toLowerCase());
+    if (idx >= 0) {
+      accounts[idx] = account;
+    } else {
+      accounts.push(account);
+    }
+    localStorage.setItem('dompetku-accounts', JSON.stringify(accounts));
+  } catch (e) {}
+}
+
 export function AuthModal({ onLoginSuccess }: AuthModalProps) {
   const [isLoginTab, setIsLoginTab] = useState(true);
   const [name, setName] = useState('');
@@ -22,6 +63,8 @@ export function AuthModal({ onLoginSuccess }: AuthModalProps) {
     e.preventDefault();
     setErrorMessage('');
 
+    const cleanEmail = email.toLowerCase().trim();
+
     if (!isLoginTab) {
       if (!name.trim()) {
         setErrorMessage('Nama lengkap wajib diisi!');
@@ -33,7 +76,7 @@ export function AuthModal({ onLoginSuccess }: AuthModalProps) {
       }
     }
 
-    if (!email.trim() || !email.includes('@')) {
+    if (!cleanEmail || !cleanEmail.includes('@')) {
       setErrorMessage('Format email tidak valid!');
       return;
     }
@@ -46,23 +89,109 @@ export function AuthModal({ onLoginSuccess }: AuthModalProps) {
     try {
       setIsLoading(true);
       const action = isLoginTab ? 'login' : 'register';
-      const payload = isLoginTab ? { email, password } : { name, email, password };
+      const payload = isLoginTab
+        ? { email: cleanEmail, password }
+        : { name: name.trim(), email: cleanEmail, password };
 
-      const res = await fetch(`/api/auth?action=${action}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+      const pHash = await browserHash(password);
 
-      const result = await res.json();
+      // 1. REGISTER
+      if (!isLoginTab) {
+        let registeredUser: UserType | null = null;
+        try {
+          const res = await fetch(`/api/auth?action=register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          const result = await res.json();
+          if (res.ok && result.success && result.data) {
+            registeredUser = result.data;
+          } else if (result.message && result.message.includes('sudah terdaftar')) {
+            throw new Error(result.message);
+          }
+        } catch (serverErr: any) {
+          if (serverErr.message && serverErr.message.includes('sudah terdaftar')) {
+            throw serverErr;
+          }
+        }
 
-      if (!res.ok || !result.success) {
-        throw new Error(result.message || 'Terjadi kesalahan');
+        // If server failed (e.g. read-only serverless / Supabase table not created yet), create persistent local account
+        if (!registeredUser) {
+          const localAccs = getLocalAccounts();
+          if (localAccs.some((a) => a.email.toLowerCase() === cleanEmail)) {
+            throw new Error('Email sudah terdaftar. Silakan login!');
+          }
+          registeredUser = {
+            id: `user-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+            name: name.trim(),
+            email: cleanEmail,
+            createdAt: new Date().toISOString(),
+          };
+        }
+
+        // Always save to local accounts cache
+        saveLocalAccount({
+          id: registeredUser.id,
+          name: registeredUser.name,
+          email: registeredUser.email,
+          passwordHash: pHash,
+          createdAt: registeredUser.createdAt,
+        });
+
+        // Set active session
+        localStorage.setItem('dompetku-user', JSON.stringify(registeredUser));
+        onLoginSuccess(registeredUser);
+        return;
+      }
+
+      // 2. LOGIN
+      let loggedInUser: UserType | null = null;
+      try {
+        const res = await fetch(`/api/auth?action=login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const result = await res.json();
+        if (res.ok && result.success && result.data) {
+          loggedInUser = result.data;
+        }
+      } catch (e) {
+        // network or server error, fallback to local check
+      }
+
+      // 2B. If server didn't find or serverless reset, check local persistent accounts
+      if (!loggedInUser) {
+        const localAccs = getLocalAccounts();
+        const found = localAccs.find(
+          (a) => a.email.toLowerCase() === cleanEmail && a.passwordHash === pHash
+        );
+        if (found) {
+          loggedInUser = {
+            id: found.id,
+            name: found.name,
+            email: found.email,
+            createdAt: found.createdAt,
+          };
+        }
+      }
+
+      if (!loggedInUser) {
+        throw new Error('Email atau kata sandi tidak cocok!');
       }
 
       // Save user to localStorage
-      localStorage.setItem('dompetku-user', JSON.stringify(result.data));
-      onLoginSuccess(result.data);
+      localStorage.setItem('dompetku-user', JSON.stringify(loggedInUser));
+      saveLocalAccount({
+        id: loggedInUser.id,
+        name: loggedInUser.name,
+        email: loggedInUser.email,
+        passwordHash: pHash,
+        createdAt: loggedInUser.createdAt,
+      });
+
+      onLoginSuccess(loggedInUser);
     } catch (err: any) {
       setErrorMessage(err.message || 'Gagal memproses autentikasi');
     } finally {

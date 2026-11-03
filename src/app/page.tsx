@@ -114,6 +114,14 @@ export default function DompetKuApp() {
       setIsLoading(true);
       const userQuery = userId ? `?userId=${userId}` : '';
 
+      // Local caching fallback per user
+      const cacheKey = userId ? `dompetku-cache-${userId}` : 'dompetku-cache-default';
+      let localCached: any = null;
+      try {
+        const raw = localStorage.getItem(cacheKey);
+        if (raw) localCached = JSON.parse(raw);
+      } catch (e) {}
+
       const [txRes, catRes, budgetRes, savingsRes] = await Promise.all([
         fetch(`/api/transactions${userQuery}`),
         fetch(`/api/categories${userQuery}`),
@@ -128,18 +136,42 @@ export default function DompetKuApp() {
         savingsRes.json(),
       ]);
 
-      if (txData.success) setTransactions(txData.data);
-      if (catData.success) setCategories(catData.data);
-      if (budgetData.success) setMonthlyBudgets(budgetData.data);
+      if (txData.success && Array.isArray(txData.data) && (txData.data.length > 0 || !localCached?.transactions)) {
+        setTransactions(txData.data);
+      } else if (localCached?.transactions) {
+        setTransactions(localCached.transactions);
+      }
+
+      if (catData.success && Array.isArray(catData.data) && (catData.data.length > 0 || !localCached?.categories)) {
+        setCategories(catData.data);
+      } else if (localCached?.categories) {
+        setCategories(localCached.categories);
+      }
+
+      if (budgetData.success && (Object.keys(budgetData.data || {}).length > 0 || !localCached?.monthlyBudgets)) {
+        setMonthlyBudgets(budgetData.data);
+      } else if (localCached?.monthlyBudgets) {
+        setMonthlyBudgets(localCached.monthlyBudgets);
+      }
+
       if (savingsData.success) {
-        setSavingsGoals(savingsData.data.goals || []);
-        setSavingsTransactions(savingsData.data.transactions || []);
-        setTotalSavings(savingsData.data.totalSavings || 0);
-        setSavingsThisMonth(savingsData.data.savingsThisMonth || 0);
-        setGoldSavings(savingsData.data.goldSavings || []);
-        setGoldTransactions(savingsData.data.goldTransactions || []);
-        setTotalGoldGrams(savingsData.data.totalGoldGrams || 0);
-        setTotalGoldEstimatedValue(savingsData.data.totalGoldEstimatedValue || 0);
+        setSavingsGoals(savingsData.data.goals || localCached?.savingsGoals || []);
+        setSavingsTransactions(savingsData.data.transactions || localCached?.savingsTransactions || []);
+        setTotalSavings(savingsData.data.totalSavings ?? localCached?.totalSavings ?? 0);
+        setSavingsThisMonth(savingsData.data.savingsThisMonth ?? localCached?.savingsThisMonth ?? 0);
+        setGoldSavings(savingsData.data.goldSavings || localCached?.goldSavings || []);
+        setGoldTransactions(savingsData.data.goldTransactions || localCached?.goldTransactions || []);
+        setTotalGoldGrams(savingsData.data.totalGoldGrams ?? localCached?.totalGoldGrams ?? 0);
+        setTotalGoldEstimatedValue(savingsData.data.totalGoldEstimatedValue ?? localCached?.totalGoldEstimatedValue ?? 0);
+      } else if (localCached) {
+        setSavingsGoals(localCached.savingsGoals || []);
+        setSavingsTransactions(localCached.savingsTransactions || []);
+        setTotalSavings(localCached.totalSavings || 0);
+        setSavingsThisMonth(localCached.savingsThisMonth || 0);
+        setGoldSavings(localCached.goldSavings || []);
+        setGoldTransactions(localCached.goldTransactions || []);
+        setTotalGoldGrams(localCached.totalGoldGrams || 0);
+        setTotalGoldEstimatedValue(localCached.totalGoldEstimatedValue || 0);
       }
     } catch (error) {
       console.error('Error loading DompetKu data:', error);
@@ -147,6 +179,44 @@ export default function DompetKuApp() {
       setIsLoading(false);
     }
   }, []);
+
+  // Synchronize local cache for the active user
+  useEffect(() => {
+    if (!isMounted || !currentUser) return;
+    try {
+      const cacheKey = `dompetku-cache-${currentUser.id}`;
+      localStorage.setItem(
+        cacheKey,
+        JSON.stringify({
+          transactions,
+          categories,
+          monthlyBudgets,
+          savingsGoals,
+          savingsTransactions,
+          totalSavings,
+          savingsThisMonth,
+          goldSavings,
+          goldTransactions,
+          totalGoldGrams,
+          totalGoldEstimatedValue,
+        })
+      );
+    } catch (e) {}
+  }, [
+    isMounted,
+    currentUser,
+    transactions,
+    categories,
+    monthlyBudgets,
+    savingsGoals,
+    savingsTransactions,
+    totalSavings,
+    savingsThisMonth,
+    goldSavings,
+    goldTransactions,
+    totalGoldGrams,
+    totalGoldEstimatedValue,
+  ]);
 
   // Initialize client side state
   useEffect(() => {
