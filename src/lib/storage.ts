@@ -1,6 +1,14 @@
 import fs from 'fs';
 import path from 'path';
-import { AppState, Category, MonthlyBudget, Transaction, TransactionFilter } from './types';
+import {
+  AppState,
+  Category,
+  MonthlyBudget,
+  SavingsGoal,
+  SavingsTransaction,
+  Transaction,
+  TransactionFilter,
+} from './types';
 import { DEFAULT_CATEGORIES, generateSampleTransactions } from './sample-data';
 import { getCurrentMonthString } from './formatters';
 import { hasSupabaseConfig, supabase } from './supabase';
@@ -13,6 +21,8 @@ function getDefaultState(): AppState {
     categories: [],
     transactions: [],
     monthlyBudgets: {},
+    savingsGoals: [],
+    savingsTransactions: [],
   };
 }
 
@@ -34,6 +44,8 @@ function ensureDataFile(): AppState {
     if (!parsed.categories) parsed.categories = [];
     if (!parsed.transactions) parsed.transactions = [];
     if (!parsed.monthlyBudgets) parsed.monthlyBudgets = {};
+    if (!parsed.savingsGoals) parsed.savingsGoals = [];
+    if (!parsed.savingsTransactions) parsed.savingsTransactions = [];
 
     return parsed;
   } catch (error) {
@@ -540,11 +552,229 @@ export async function resetAllData(userId?: string): Promise<AppState> {
   if (userId) {
     state.transactions = state.transactions.filter((t) => t.userId !== userId);
     state.categories = state.categories.filter((c) => c.userId !== userId);
+    if (state.savingsGoals) state.savingsGoals = state.savingsGoals.filter((g) => g.userId !== userId);
+    if (state.savingsTransactions) state.savingsTransactions = state.savingsTransactions.filter((s) => s.userId !== userId);
   } else {
     state.transactions = [];
     state.categories = [];
     state.monthlyBudgets = {};
+    state.savingsGoals = [];
+    state.savingsTransactions = [];
   }
   saveData(state);
   return state;
+}
+
+// -------------------------------------------------------------
+// SAVINGS & GOALS (TABUNGAN & IMPIAN)
+// -------------------------------------------------------------
+
+export async function getSavingsGoals(userId?: string): Promise<SavingsGoal[]> {
+  if (hasSupabaseConfig) {
+    try {
+      let query = supabase.from('savings_goals').select('*').order('created_at', { ascending: false });
+      if (userId) query = query.eq('user_id', userId);
+      const { data, error } = await query;
+      if (!error && Array.isArray(data)) {
+        return data.map((row) => ({
+          id: row.id,
+          userId: row.user_id,
+          title: row.title,
+          targetAmount: Number(row.target_amount) || 0,
+          currentAmount: Number(row.current_amount) || 0,
+          targetDate: row.target_date || undefined,
+          color: row.color || '#10B981',
+          icon: row.icon || 'PiggyBank',
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+        }));
+      }
+    } catch (e) {
+      // fallback
+    }
+  }
+
+  const state = ensureDataFile();
+  const list = state.savingsGoals || [];
+  if (userId) {
+    return list.filter((g) => g.userId === userId || !g.userId);
+  }
+  return list;
+}
+
+export async function saveSavingsGoal(goal: SavingsGoal): Promise<SavingsGoal> {
+  const now = new Date().toISOString();
+  const toSave: SavingsGoal = {
+    ...goal,
+    id: goal.id || `goal-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    createdAt: goal.createdAt || now,
+    updatedAt: now,
+  };
+
+  if (hasSupabaseConfig) {
+    try {
+      await supabase.from('savings_goals').upsert({
+        id: toSave.id,
+        user_id: toSave.userId || null,
+        title: toSave.title,
+        target_amount: toSave.targetAmount,
+        current_amount: toSave.currentAmount,
+        target_date: toSave.targetDate || null,
+        color: toSave.color,
+        icon: toSave.icon,
+        updated_at: toSave.updatedAt,
+      });
+    } catch (e) {
+      // fallback
+    }
+  }
+
+  const state = ensureDataFile();
+  if (!state.savingsGoals) state.savingsGoals = [];
+  const idx = state.savingsGoals.findIndex((g) => g.id === toSave.id);
+  if (idx >= 0) {
+    state.savingsGoals[idx] = toSave;
+  } else {
+    state.savingsGoals.unshift(toSave);
+  }
+  saveData(state);
+  return toSave;
+}
+
+export async function deleteSavingsGoal(id: string, userId?: string): Promise<boolean> {
+  if (hasSupabaseConfig) {
+    try {
+      let query = supabase.from('savings_goals').delete().eq('id', id);
+      if (userId) query = query.eq('user_id', userId);
+      await query;
+    } catch (e) {
+      // fallback
+    }
+  }
+
+  const state = ensureDataFile();
+  if (state.savingsGoals) {
+    state.savingsGoals = state.savingsGoals.filter((g) => g.id !== id);
+    saveData(state);
+  }
+  return true;
+}
+
+export async function getSavingsTransactions(userId?: string): Promise<SavingsTransaction[]> {
+  if (hasSupabaseConfig) {
+    try {
+      let query = supabase.from('savings_transactions').select('*').order('date', { ascending: false });
+      if (userId) query = query.eq('user_id', userId);
+      const { data, error } = await query;
+      if (!error && Array.isArray(data)) {
+        return data.map((row) => ({
+          id: row.id,
+          userId: row.user_id,
+          goalId: row.goal_id || undefined,
+          goalTitle: row.goal_title || undefined,
+          type: row.type as 'deposit' | 'withdraw',
+          amount: Number(row.amount) || 0,
+          date: typeof row.date === 'string' ? row.date.split('T')[0] : row.date,
+          notes: row.notes || '',
+          createdAt: row.created_at,
+        }));
+      }
+    } catch (e) {
+      // fallback
+    }
+  }
+
+  const state = ensureDataFile();
+  const list = state.savingsTransactions || [];
+  if (userId) {
+    return list.filter((s) => s.userId === userId || !s.userId);
+  }
+  return list;
+}
+
+export async function saveSavingsTransaction(tx: SavingsTransaction): Promise<SavingsTransaction> {
+  const now = new Date().toISOString();
+  const toSave: SavingsTransaction = {
+    ...tx,
+    id: tx.id || `sav-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    createdAt: tx.createdAt || now,
+  };
+
+  if (hasSupabaseConfig) {
+    try {
+      await supabase.from('savings_transactions').upsert({
+        id: toSave.id,
+        user_id: toSave.userId || null,
+        goal_id: toSave.goalId || null,
+        goal_title: toSave.goalTitle || null,
+        type: toSave.type,
+        amount: toSave.amount,
+        date: toSave.date,
+        notes: toSave.notes || null,
+        created_at: toSave.createdAt,
+      });
+    } catch (e) {
+      // fallback
+    }
+  }
+
+  const state = ensureDataFile();
+  if (!state.savingsTransactions) state.savingsTransactions = [];
+  const idx = state.savingsTransactions.findIndex((s) => s.id === toSave.id);
+  if (idx >= 0) {
+    state.savingsTransactions[idx] = toSave;
+  } else {
+    state.savingsTransactions.unshift(toSave);
+  }
+
+  // Update target goal currentAmount if linked
+  if (toSave.goalId && state.savingsGoals) {
+    const goal = state.savingsGoals.find((g) => g.id === toSave.goalId);
+    if (goal) {
+      const delta = toSave.type === 'deposit' ? toSave.amount : -toSave.amount;
+      goal.currentAmount = Math.max(0, (goal.currentAmount || 0) + delta);
+      goal.updatedAt = now;
+      if (hasSupabaseConfig) {
+        try {
+          await supabase.from('savings_goals').update({ current_amount: goal.currentAmount }).eq('id', goal.id);
+        } catch (e) {}
+      }
+    }
+  }
+
+  saveData(state);
+  return toSave;
+}
+
+export async function deleteSavingsTransaction(id: string, userId?: string): Promise<boolean> {
+  if (hasSupabaseConfig) {
+    try {
+      let query = supabase.from('savings_transactions').delete().eq('id', id);
+      if (userId) query = query.eq('user_id', userId);
+      await query;
+    } catch (e) {
+      // fallback
+    }
+  }
+
+  const state = ensureDataFile();
+  if (state.savingsTransactions) {
+    const found = state.savingsTransactions.find((s) => s.id === id);
+    if (found && found.goalId && state.savingsGoals) {
+      const goal = state.savingsGoals.find((g) => g.id === found.goalId);
+      if (goal) {
+        // Reverse the effect
+        const rev = found.type === 'deposit' ? -found.amount : found.amount;
+        goal.currentAmount = Math.max(0, (goal.currentAmount || 0) + rev);
+        if (hasSupabaseConfig) {
+          try {
+            await supabase.from('savings_goals').update({ current_amount: goal.currentAmount }).eq('id', goal.id);
+          } catch (e) {}
+        }
+      }
+    }
+    state.savingsTransactions = state.savingsTransactions.filter((s) => s.id !== id);
+    saveData(state);
+  }
+  return true;
 }

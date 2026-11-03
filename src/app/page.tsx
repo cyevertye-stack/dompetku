@@ -10,7 +10,16 @@ import {
   getPreviousMonthString,
   getTodayString,
 } from '@/lib/formatters';
-import { Category, DashboardMetrics, PaymentMethod, Transaction, TransactionFilter as FilterType, User } from '@/lib/types';
+import {
+  Category,
+  DashboardMetrics,
+  PaymentMethod,
+  SavingsGoal,
+  SavingsTransaction,
+  Transaction,
+  TransactionFilter as FilterType,
+  User,
+} from '@/lib/types';
 import { Header } from '@/components/layout/Header';
 import { Sidebar, TabKey } from '@/components/layout/Sidebar';
 import { BottomNav } from '@/components/layout/BottomNav';
@@ -31,6 +40,7 @@ import { BackupRestore } from '@/components/settings/BackupRestore';
 import { DeploymentGuideModal } from '@/components/settings/DeploymentGuideModal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { AuthModal } from '@/components/auth/AuthModal';
+import { SavingsView } from '@/components/savings/SavingsView';
 import { TEMPLATE_CATEGORIES } from '@/lib/sample-data';
 
 export default function DompetKuApp() {
@@ -52,6 +62,10 @@ export default function DompetKuApp() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [monthlyBudgets, setMonthlyBudgets] = useState<Record<string, number>>({});
+  const [savingsGoals, setSavingsGoals] = useState<SavingsGoal[]>([]);
+  const [savingsTransactions, setSavingsTransactions] = useState<SavingsTransaction[]>([]);
+  const [totalSavings, setTotalSavings] = useState<number>(0);
+  const [savingsThisMonth, setSavingsThisMonth] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
 
   // Modals & Dialog State
@@ -94,21 +108,29 @@ export default function DompetKuApp() {
       setIsLoading(true);
       const userQuery = userId ? `?userId=${userId}` : '';
 
-      const [txRes, catRes, budgetRes] = await Promise.all([
+      const [txRes, catRes, budgetRes, savingsRes] = await Promise.all([
         fetch(`/api/transactions${userQuery}`),
         fetch(`/api/categories${userQuery}`),
         fetch(`/api/budgets${userQuery}`),
+        fetch(`/api/savings${userQuery}`),
       ]);
 
-      const [txData, catData, budgetData] = await Promise.all([
+      const [txData, catData, budgetData, savingsData] = await Promise.all([
         txRes.json(),
         catRes.json(),
         budgetRes.json(),
+        savingsRes.json(),
       ]);
 
       if (txData.success) setTransactions(txData.data);
       if (catData.success) setCategories(catData.data);
       if (budgetData.success) setMonthlyBudgets(budgetData.data);
+      if (savingsData.success) {
+        setSavingsGoals(savingsData.data.goals || []);
+        setSavingsTransactions(savingsData.data.transactions || []);
+        setTotalSavings(savingsData.data.totalSavings || 0);
+        setSavingsThisMonth(savingsData.data.savingsThisMonth || 0);
+      }
     } catch (error) {
       console.error('Error loading DompetKu data:', error);
     } finally {
@@ -175,6 +197,10 @@ export default function DompetKuApp() {
     setTransactions([]);
     setCategories([]);
     setMonthlyBudgets({});
+    setSavingsGoals([]);
+    setSavingsTransactions([]);
+    setTotalSavings(0);
+    setSavingsThisMonth(0);
   };
 
   // Dashboard Metrics Calculation
@@ -235,8 +261,10 @@ export default function DompetKuApp() {
       previousMonthTotal,
       comparisonPercent,
       comparisonAmount,
+      totalSavings,
+      savingsThisMonth,
     };
-  }, [transactions, categories, monthlyBudgets, currentMonth, prevMonth, todayStr, sevenDaysAgoStr]);
+  }, [transactions, categories, monthlyBudgets, currentMonth, prevMonth, todayStr, sevenDaysAgoStr, totalSavings, savingsThisMonth]);
 
   // Filtered transactions for the Transaksi tab
   const filteredTransactions = useMemo(() => {
@@ -549,6 +577,7 @@ export default function DompetKuApp() {
                 <SummaryCards
                   metrics={metrics}
                   onOpenBudgetModal={() => setIsBudgetModalOpen(true)}
+                  onOpenSavings={() => setActiveTab('savings')}
                 />
 
                 {/* 2. Budget Alert Banner */}
@@ -677,6 +706,18 @@ export default function DompetKuApp() {
                   onLoadTemplateCategories={handleLoadTemplateCategories}
                 />
               </div>
+            )}
+
+            {/* VIEW: TABUNGAN & IMPIAN */}
+            {activeTab === 'savings' && (
+              <SavingsView
+                goals={savingsGoals}
+                transactions={savingsTransactions}
+                totalSavings={totalSavings}
+                savingsThisMonth={savingsThisMonth}
+                userId={currentUser?.id}
+                onRefresh={() => loadData(currentUser?.id)}
+              />
             )}
 
             {/* VIEW 5: LAPORAN & EKSPOR EXCEL */}

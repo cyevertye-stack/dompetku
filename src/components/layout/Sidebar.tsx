@@ -13,10 +13,11 @@ import {
   Moon,
   Sun,
   LogOut,
+  PiggyBank,
 } from 'lucide-react';
 import { User } from '@/lib/types';
 
-export type TabKey = 'dashboard' | 'transactions' | 'budgets' | 'categories' | 'reports' | 'settings';
+export type TabKey = 'dashboard' | 'transactions' | 'budgets' | 'categories' | 'savings' | 'reports' | 'settings';
 
 interface SidebarProps {
   activeTab: TabKey;
@@ -51,6 +52,12 @@ export function Sidebar({
       label: 'Transaksi',
       icon: Receipt,
       badge: transactionCount > 0 ? transactionCount : null,
+    },
+    {
+      key: 'savings' as TabKey,
+      label: 'Uang Tabungan',
+      icon: PiggyBank,
+      badge: null,
     },
     {
       key: 'budgets' as TabKey,

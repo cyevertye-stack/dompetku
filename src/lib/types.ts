@@ -22,6 +22,31 @@ export interface Category {
   isDefault?: boolean;
 }
 
+export interface SavingsGoal {
+  id: string;
+  userId?: string;
+  title: string;
+  targetAmount: number;
+  currentAmount: number;
+  targetDate?: string;
+  color?: string;
+  icon?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SavingsTransaction {
+  id: string;
+  userId?: string;
+  goalId?: string;
+  goalTitle?: string;
+  type: 'deposit' | 'withdraw'; // 'deposit' = setor tabungan, 'withdraw' = ambil tabungan
+  amount: number;
+  date: string; // YYYY-MM-DD
+  notes?: string;
+  createdAt: string;
+}
+
 export interface Transaction {
   id: string;
   userId?: string;
@@ -46,6 +71,8 @@ export interface AppState {
   transactions: Transaction[];
   categories: Category[];
   monthlyBudgets: Record<string, number>; // key: "userId:YYYY-MM" or "YYYY-MM"
+  savingsGoals?: SavingsGoal[];
+  savingsTransactions?: SavingsTransaction[];
 }
 
 export interface TransactionFilter {
@@ -71,4 +98,6 @@ export interface DashboardMetrics {
   previousMonthTotal: number;
   comparisonPercent: number;
   comparisonAmount: number;
+  totalSavings?: number;
+  savingsThisMonth?: number;
 }
