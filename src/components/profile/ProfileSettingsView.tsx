@@ -14,8 +14,12 @@ import {
   PiggyBank,
   Tag,
   Sparkles,
+  Sun,
+  Moon,
+  Flower2,
+  Check,
 } from 'lucide-react';
-import { User } from '@/lib/types';
+import { ThemeMode, User } from '@/lib/types';
 import { formatRupiah } from '@/lib/formatters';
 import { BackupRestore } from '../settings/BackupRestore';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
@@ -28,6 +32,8 @@ interface ProfileSettingsViewProps {
   totalSavingsValue: number;
   categoryCount: number;
   onRefreshData: () => Promise<void>;
+  theme?: ThemeMode;
+  onSelectTheme?: (theme: ThemeMode) => void;
 }
 
 export function ProfileSettingsView({
@@ -38,6 +44,8 @@ export function ProfileSettingsView({
   totalSavingsValue,
   categoryCount,
   onRefreshData,
+  theme = 'light',
+  onSelectTheme,
 }: ProfileSettingsViewProps) {
   const [name, setName] = useState(currentUser?.name || '');
   const [isEditingName, setIsEditingName] = useState(false);
@@ -290,6 +298,128 @@ export function ProfileSettingsView({
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Bagian Pilihan Tema Tampilan (3 Mode Warna: Terang, Gelap, Soft Pink) */}
+      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 sm:p-8 shadow-xs space-y-5 transition-colors">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-1 border-b border-slate-100 dark:border-slate-800">
+          <div>
+            <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-rose-500" />
+              <span>Tema Tampilan (3 Mode Warna)</span>
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Pilih gaya warna yang paling nyaman dan sesuai selera Anda
+            </p>
+          </div>
+          <span className="text-xs font-bold px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-700 dark:text-slate-300 self-start sm:self-auto border border-slate-200 dark:border-slate-700">
+            Aktif: {theme === 'pink' ? '🌸 Soft Pink' : theme === 'dark' ? '🌙 Mode Gelap' : '☀️ Mode Terang'}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+          {/* 1. Mode Terang */}
+          <button
+            type="button"
+            onClick={() => onSelectTheme?.('light')}
+            className={`p-4 rounded-2xl border text-left transition-all cursor-pointer relative flex flex-col justify-between active:scale-98 ${
+              theme === 'light'
+                ? 'border-blue-500 ring-2 ring-blue-500/20 bg-blue-50/40 shadow-xs'
+                : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 bg-slate-50/60 dark:bg-slate-800/40'
+            }`}
+          >
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600">
+                  <Sun className="w-4 h-4" />
+                </div>
+                {theme === 'light' && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 bg-blue-600 text-white rounded-full flex items-center gap-1 shadow-xs">
+                    <Check className="w-3 h-3 stroke-[2.5]" /> Aktif
+                  </span>
+                )}
+              </div>
+              <div className="font-bold text-sm text-slate-900 dark:text-white">Mode Terang</div>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                Latar putih bersih dengan kontras biru klasik, optimal untuk penggunaan siang hari.
+              </p>
+            </div>
+            <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-700/60">
+              <div className="w-3.5 h-3.5 rounded-full bg-white border border-slate-300 shadow-2xs" title="Putih Bersih" />
+              <div className="w-3.5 h-3.5 rounded-full bg-slate-100 border border-slate-300 shadow-2xs" title="Slate 100" />
+              <div className="w-3.5 h-3.5 rounded-full bg-blue-600 shadow-2xs" title="Biru Primer" />
+              <span className="text-[10px] text-slate-400 ml-auto font-semibold">Klasik</span>
+            </div>
+          </button>
+
+          {/* 2. Mode Gelap */}
+          <button
+            type="button"
+            onClick={() => onSelectTheme?.('dark')}
+            className={`p-4 rounded-2xl border text-left transition-all cursor-pointer relative flex flex-col justify-between active:scale-98 ${
+              theme === 'dark'
+                ? 'border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-950/30 shadow-xs'
+                : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 bg-slate-50/60 dark:bg-slate-800/40'
+            }`}
+          >
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <div className="w-8 h-8 rounded-xl bg-indigo-100 dark:bg-indigo-950/80 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                  <Moon className="w-4 h-4" />
+                </div>
+                {theme === 'dark' && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 bg-indigo-600 text-white rounded-full flex items-center gap-1 shadow-xs">
+                    <Check className="w-3 h-3 stroke-[2.5]" /> Aktif
+                  </span>
+                )}
+              </div>
+              <div className="font-bold text-sm text-slate-900 dark:text-white">Mode Gelap</div>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                Latar gelap elegan berkedalaman malam, meredam silau dan nyaman di mata saat malam.
+              </p>
+            </div>
+            <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-700/60">
+              <div className="w-3.5 h-3.5 rounded-full bg-slate-950 border border-slate-700 shadow-2xs" title="Slate 950" />
+              <div className="w-3.5 h-3.5 rounded-full bg-slate-900 border border-slate-700 shadow-2xs" title="Slate 900" />
+              <div className="w-3.5 h-3.5 rounded-full bg-indigo-500 shadow-2xs" title="Indigo Night" />
+              <span className="text-[10px] text-slate-400 ml-auto font-semibold">Night Mode</span>
+            </div>
+          </button>
+
+          {/* 3. Mode Soft Pink */}
+          <button
+            type="button"
+            onClick={() => onSelectTheme?.('pink')}
+            className={`p-4 rounded-2xl border text-left transition-all cursor-pointer relative flex flex-col justify-between active:scale-98 ${
+              theme === 'pink'
+                ? 'border-rose-400 ring-2 ring-rose-400/30 bg-rose-50/60 shadow-xs'
+                : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 bg-slate-50/60 dark:bg-slate-800/40'
+            }`}
+          >
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <div className="w-8 h-8 rounded-xl bg-rose-100 flex items-center justify-center text-rose-600">
+                  <Flower2 className="w-4 h-4" />
+                </div>
+                {theme === 'pink' && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 bg-rose-600 text-white rounded-full flex items-center gap-1 shadow-xs">
+                    <Check className="w-3 h-3 stroke-[2.5]" /> Aktif
+                  </span>
+                )}
+              </div>
+              <div className="font-bold text-sm text-slate-900 dark:text-white">Mode Soft Pink</div>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                Nuansa mawar pastel lembut & estetik, warna pas tidak norak dan menyejukkan pandangan.
+              </p>
+            </div>
+            <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-700/60">
+              <div className="w-3.5 h-3.5 rounded-full bg-[#fff1f5] border border-rose-200 shadow-2xs" title="Blush Pastel" />
+              <div className="w-3.5 h-3.5 rounded-full bg-[#fbcfe8] border border-rose-300 shadow-2xs" title="Rose Petal" />
+              <div className="w-3.5 h-3.5 rounded-full bg-rose-600 shadow-2xs" title="Soft Rose" />
+              <span className="text-[10px] text-rose-500 font-bold ml-auto">Estetik</span>
+            </div>
+          </button>
         </div>
       </div>
 

@@ -9,18 +9,21 @@ import {
   Calendar,
   Moon,
   Sun,
+  Flower2,
   LogOut,
   User,
 } from 'lucide-react';
 import { formatMonthIndonesian } from '@/lib/formatters';
-import { User as UserType } from '@/lib/types';
+import { ThemeMode, User as UserType } from '@/lib/types';
 
 interface HeaderProps {
   currentMonth: string;
   currentUser: UserType | null;
   darkMode: boolean;
+  theme?: ThemeMode;
   activeTab?: string;
-  onToggleDarkMode: () => void;
+  onToggleDarkMode?: () => void;
+  onToggleTheme?: () => void;
   onOpenAddModal: () => void;
   onQuickExport: () => void;
   onOpenSettings: () => void;
@@ -31,13 +34,22 @@ export function Header({
   currentMonth,
   currentUser,
   darkMode,
+  theme = 'light',
   activeTab = 'dashboard',
   onToggleDarkMode,
+  onToggleTheme,
   onOpenAddModal,
   onQuickExport,
   onOpenSettings,
   onLogout,
 }: HeaderProps) {
+  const handleToggle = onToggleTheme || onToggleDarkMode;
+
+  const getThemeTitle = () => {
+    if (theme === 'light') return 'Mode: Terang ☀️ (Klik untuk Mode Gelap)';
+    if (theme === 'dark') return 'Mode: Gelap 🌙 (Klik untuk Mode Soft Pink)';
+    return 'Mode: Soft Pink 🌸 (Klik untuk Mode Terang)';
+  };
   return (
     <header className="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 px-4 sm:px-8 py-3.5 flex items-center justify-between gap-4 transition-colors">
       {/* Brand logo for mobile (sidebar handles desktop) */}
@@ -67,13 +79,19 @@ export function Header({
 
       {/* Action Buttons & Profile */}
       <div className="flex items-center gap-2 sm:gap-3">
-        {/* Dark Mode Toggle */}
+        {/* 3-Mode Theme Toggle (Light, Dark, Soft Pink) */}
         <button
-          onClick={onToggleDarkMode}
-          className="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
-          title={darkMode ? 'Beralih ke Mode Terang' : 'Beralih ke Mode Gelap'}
+          onClick={handleToggle}
+          className="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all cursor-pointer hover:scale-105 active:scale-95"
+          title={getThemeTitle()}
         >
-          {darkMode ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-slate-600" />}
+          {theme === 'pink' ? (
+            <Flower2 className="w-5 h-5 text-rose-500 animate-in zoom-in-75 duration-200" />
+          ) : theme === 'dark' || (darkMode && !theme) ? (
+            <Moon className="w-5 h-5 text-indigo-400 animate-in zoom-in-75 duration-200" />
+          ) : (
+            <Sun className="w-5 h-5 text-amber-500 animate-in zoom-in-75 duration-200" />
+          )}
         </button>
 
         {/* Quick Excel Export */}

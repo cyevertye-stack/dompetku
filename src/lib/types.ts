@@ -1,3 +1,5 @@
+export type ThemeMode = 'light' | 'dark' | 'pink';
+
 export type PaymentMethod = 
   | 'Tunai'
   | 'Transfer Bank'

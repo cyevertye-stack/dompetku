@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
+@custom-variant pink (&:where(.pink, .pink *));
 
 :root {
   --background: #f8fafc;
@@ -12,9 +13,199 @@
   --foreground: #f8fafc;
 }
 
+.pink {
+  --background: #fff1f5;
+  --foreground: #2d141e;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
   transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* ==========================================================================
+   MODE PINK (ESTETIK, LEMBUT / SOFT ROSE, TIDAK NORAK)
+   Warna disesuaikan agar lembut, tidak neon menyilaukan, dan nyaman di mata
+   ========================================================================== */
+
+.pink {
+  color-scheme: light;
+}
+
+.pink *::selection {
+  background-color: #f43f5e;
+  color: #ffffff;
+}
+
+/* Background layout utama */
+.pink body,
+.pink .bg-slate-50,
+.pink .bg-slate-100 {
+  background-color: #fff1f5 !important;
+}
+
+/* Kartu & Permukaan Kontainer */
+.pink .bg-white {
+  background-color: #ffffff !important;
+  border-color: #fbcfe8 !important;
+}
+
+/* Permukaan abu-abu lembut / strip tabel / input latar */
+.pink .bg-slate-100\/80,
+.pink .bg-slate-100\/50,
+.pink .bg-slate-50\/70,
+.pink .bg-slate-50\/80 {
+  background-color: #fdf2f5 !important;
+}
+
+.pink .hover\:bg-slate-50:hover,
+.pink .hover\:bg-slate-100:hover {
+  background-color: #fde8ee !important;
+}
+
+/* Warna Teks (Kontras tinggi bernuansa rose-charcoal yang lembut & terbaca) */
+.pink .text-slate-900,
+.pink .text-slate-800 {
+  color: #2d141e !important;
+}
+
+.pink .text-slate-700,
+.pink .text-slate-600 {
+  color: #593545 !important;
+}
+
+.pink .text-slate-500,
+.pink .text-slate-400 {
+  color: #8c6878 !important;
+}
+
+/* Border & Garis Pembatas */
+.pink .border-slate-100 {
+  border-color: #fce7f3 !important;
+}
+
+.pink .border-slate-200,
+.pink .border-slate-200\/80,
+.pink .border-slate-200\/60 {
+  border-color: #fbcfe8 !important;
+}
+
+.pink .border-slate-300 {
+  border-color: #f472b6 !important;
+}
+
+/* Aksen Tombol & Elemen Primer (Biru -> Soft Rose Pink Elegan) */
+.pink .bg-blue-600 {
+  background-color: #e11d48 !important;
+}
+
+.pink .hover\:bg-blue-700:hover {
+  background-color: #be123c !important;
+}
+
+.pink .active\:bg-blue-800:active {
+  background-color: #9f1239 !important;
+}
+
+.pink .text-blue-600,
+.pink .text-blue-500 {
+  color: #e11d48 !important;
+}
+
+.pink .text-blue-400 {
+  color: #fb7185 !important;
+}
+
+.pink .bg-blue-50 {
+  background-color: #ffe4e6 !important;
+  color: #9f1239 !important;
+}
+
+.pink .border-blue-200,
+.pink .border-blue-200\/60 {
+  border-color: #fecdd3 !important;
+}
+
+.pink .shadow-blue-200 {
+  --tw-shadow-color: rgba(225, 29, 72, 0.25) !important;
+}
+
+.pink .focus\:ring-blue-500:focus,
+.pink .focus\:ring-blue-600:focus {
+  --tw-ring-color: #f43f5e !important;
+}
+
+/* Sidebar di Mode Pink (Nuansa Deep Berry Noir yang Mewah & Kontras Bersih) */
+.pink aside {
+  background-color: #24111b !important;
+  border-color: #3d1b2a !important;
+  color: #f3d7e3 !important;
+}
+
+.pink aside .border-slate-800,
+.pink aside .border-slate-800\/80 {
+  border-color: #3d1b2a !important;
+}
+
+.pink aside .text-slate-400 {
+  color: #ba889d !important;
+}
+
+.pink aside .hover\:bg-slate-800\/60:hover,
+.pink aside .hover\:bg-slate-800:hover {
+  background-color: #3b1c2b !important;
+  color: #ffffff !important;
+}
+
+.pink aside .bg-blue-600 {
+  background-color: #e11d48 !important;
+  box-shadow: 0 4px 14px rgba(225, 29, 72, 0.4) !important;
+}
+
+.pink aside .text-blue-400 {
+  color: #fb7185 !important;
+}
+
+/* Header & Navigasi Mobile di Mode Pink */
+.pink header {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border-color: #fce7f3 !important;
+}
+
+.pink .lg\:hidden.fixed.bottom-0 {
+  background-color: rgba(255, 255, 255, 0.96) !important;
+  border-color: #fbcfe8 !important;
+}
+
+/* Kartu Ringkasan Mobile & Desktop */
+.pink .bg-gradient-to-br.from-slate-900.via-blue-950.to-slate-900 {
+  background-image: linear-gradient(to bottom right, #341524, #441a2e, #290f1c) !important;
+  border-color: #4f1e36 !important;
+}
+
+/* Banner Peringatan / Anggaran Belum Diatur */
+.pink .bg-gradient-to-r.from-blue-50.to-indigo-50 {
+  background-image: linear-gradient(to right, #ffe4e6, #fce7f3) !important;
+  border-color: #fecdd3 !important;
+}
+
+/* Scrollbar Custom di Mode Pink */
+.pink ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.pink ::-webkit-scrollbar-track {
+  background: #fff1f5;
+}
+
+.pink ::-webkit-scrollbar-thumb {
+  background: #fbcfe8;
+  border-radius: 9999px;
+}
+
+.pink ::-webkit-scrollbar-thumb:hover {
+  background: #f472b6;
 }

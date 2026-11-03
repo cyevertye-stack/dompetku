@@ -18,6 +18,7 @@ import {
   PaymentMethod,
   SavingsGoal,
   SavingsTransaction,
+  ThemeMode,
   Transaction,
   TransactionFilter as FilterType,
   User,
@@ -55,8 +56,9 @@ export default function DompetKuApp() {
   // Authentication State
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
-  // Dark Mode State
-  const [darkMode, setDarkMode] = useState(false);
+  // Theme State (3 Color Modes: 'light' | 'dark' | 'pink')
+  const [theme, setTheme] = useState<ThemeMode>('light');
+  const darkMode = theme === 'dark';
 
   // App Main State
   const [activeTab, setActiveTab] = useState<TabKey>('dashboard');
@@ -233,12 +235,23 @@ export default function DompetKuApp() {
     setSevenDaysAgoStr(sevenStr);
     setTxFilter((prev) => ({ ...prev, month: currM }));
 
-    // Check Theme
-    const savedTheme = localStorage.getItem('dompetku-theme');
-    if (savedTheme === 'dark') {
-      setDarkMode(true);
-      document.documentElement.classList.add('dark');
-    }
+    // Check Theme (Support 3 modes: light, dark, pink)
+    try {
+      const savedTheme = localStorage.getItem('dompetku-theme') as ThemeMode | null;
+      if (savedTheme === 'pink') {
+        setTheme('pink');
+        document.documentElement.classList.remove('dark', 'light');
+        document.documentElement.classList.add('pink');
+      } else if (savedTheme === 'dark') {
+        setTheme('dark');
+        document.documentElement.classList.remove('pink', 'light');
+        document.documentElement.classList.add('dark');
+      } else {
+        setTheme('light');
+        document.documentElement.classList.remove('dark', 'pink');
+        document.documentElement.classList.add('light');
+      }
+    } catch (e) {}
 
     // Restore Saved Active Tab so page refresh stays on current tab
     try {
@@ -272,16 +285,25 @@ export default function DompetKuApp() {
     }
   }, [loadData]);
 
-  // Toggle Dark Mode
-  const toggleDarkMode = () => {
-    const nextMode = !darkMode;
-    setDarkMode(nextMode);
-    if (nextMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('dompetku-theme', 'dark');
+  // Theme Handlers (3 Modes: light -> dark -> pink -> light)
+  const applyTheme = (newTheme: ThemeMode) => {
+    setTheme(newTheme);
+    if (typeof document !== 'undefined') {
+      document.documentElement.classList.remove('dark', 'pink', 'light');
+      document.documentElement.classList.add(newTheme);
+    }
+    try {
+      localStorage.setItem('dompetku-theme', newTheme);
+    } catch (e) {}
+  };
+
+  const toggleTheme = () => {
+    if (theme === 'light') {
+      applyTheme('dark');
+    } else if (theme === 'dark') {
+      applyTheme('pink');
     } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('dompetku-theme', 'light');
+      applyTheme('light');
     }
   };
 
@@ -681,7 +703,9 @@ export default function DompetKuApp() {
         isOverBudget={metrics.remainingBudget < 0 && metrics.monthlyBudget > 0}
         currentUser={currentUser}
         darkMode={darkMode}
-        onToggleDarkMode={toggleDarkMode}
+        theme={theme}
+        onToggleDarkMode={toggleTheme}
+        onToggleTheme={toggleTheme}
         onLogout={handleLogout}
       />
 
@@ -692,8 +716,10 @@ export default function DompetKuApp() {
           currentMonth={currentMonth}
           currentUser={currentUser}
           darkMode={darkMode}
+          theme={theme}
           activeTab={activeTab}
-          onToggleDarkMode={toggleDarkMode}
+          onToggleDarkMode={toggleTheme}
+          onToggleTheme={toggleTheme}
           onOpenAddModal={() => {
             setEditingTransaction(null);
             setIsAddTxModalOpen(true);
@@ -746,6 +772,7 @@ export default function DompetKuApp() {
                   categories={categories}
                   currentMonth={currentMonth}
                   darkMode={darkMode}
+                  theme={theme}
                 />
 
                 {/* 4. Recent Transactions */}
@@ -909,6 +936,8 @@ export default function DompetKuApp() {
                 totalSavingsValue={totalSavings + totalGoldEstimatedValue}
                 categoryCount={categories.length}
                 onRefreshData={() => loadData(currentUser?.id)}
+                theme={theme}
+                onSelectTheme={applyTheme}
               />
             )}
           </div>

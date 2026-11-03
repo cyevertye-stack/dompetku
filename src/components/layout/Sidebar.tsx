@@ -12,10 +12,11 @@ import {
   ShieldCheck,
   Moon,
   Sun,
+  Flower2,
   LogOut,
   PiggyBank,
 } from 'lucide-react';
-import { User } from '@/lib/types';
+import { ThemeMode, User } from '@/lib/types';
 
 export type TabKey = 'dashboard' | 'transactions' | 'budgets' | 'categories' | 'savings' | 'reports' | 'settings';
 
@@ -26,7 +27,9 @@ interface SidebarProps {
   isOverBudget: boolean;
   currentUser: User | null;
   darkMode: boolean;
-  onToggleDarkMode: () => void;
+  theme?: ThemeMode;
+  onToggleDarkMode?: () => void;
+  onToggleTheme?: () => void;
   onLogout: () => void;
 }
 
@@ -37,9 +40,18 @@ export function Sidebar({
   isOverBudget,
   currentUser,
   darkMode,
+  theme = 'light',
   onToggleDarkMode,
+  onToggleTheme,
   onLogout,
 }: SidebarProps) {
+  const handleToggle = onToggleTheme || onToggleDarkMode;
+
+  const getThemeTitle = () => {
+    if (theme === 'light') return 'Tema: Terang ☀️ (Klik untuk Mode Gelap)';
+    if (theme === 'dark') return 'Tema: Gelap 🌙 (Klik untuk Mode Soft Pink)';
+    return 'Tema: Soft Pink 🌸 (Klik untuk Mode Terang)';
+  };
   const menuItems = [
     {
       key: 'dashboard' as TabKey,
@@ -105,13 +117,19 @@ export function Sidebar({
           </div>
         </div>
 
-        {/* Theme Toggle Button */}
+        {/* Theme Toggle Button (3 Modes: Light, Dark, Soft Pink) */}
         <button
-          onClick={onToggleDarkMode}
-          className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
-          title={darkMode ? 'Mode Terang' : 'Mode Gelap'}
+          onClick={handleToggle}
+          className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all cursor-pointer hover:scale-105 active:scale-95"
+          title={getThemeTitle()}
         >
-          {darkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
+          {theme === 'pink' ? (
+            <Flower2 className="w-4 h-4 text-rose-400 animate-in zoom-in-75 duration-200" />
+          ) : theme === 'dark' || (darkMode && !theme) ? (
+            <Moon className="w-4 h-4 text-indigo-300 animate-in zoom-in-75 duration-200" />
+          ) : (
+            <Sun className="w-4 h-4 text-amber-400 animate-in zoom-in-75 duration-200" />
+          )}
         </button>
       </div>
 

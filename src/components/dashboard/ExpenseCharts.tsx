@@ -15,7 +15,7 @@ import {
   Filler,
 } from 'chart.js';
 import { Line, Doughnut, Bar } from 'react-chartjs-2';
-import { Category, Transaction } from '@/lib/types';
+import { Category, ThemeMode, Transaction } from '@/lib/types';
 import {
   BULAN_INDONESIA,
   BULAN_PENDEK,
@@ -41,6 +41,7 @@ interface ExpenseChartsProps {
   categories: Category[];
   currentMonth: string;
   darkMode?: boolean;
+  theme?: ThemeMode;
 }
 
 export function ExpenseCharts({
@@ -48,7 +49,10 @@ export function ExpenseCharts({
   categories,
   currentMonth,
   darkMode = false,
+  theme = 'light',
 }: ExpenseChartsProps) {
+  const isPink = theme === 'pink';
+
   // 1. Daily Expenses (Current Month)
   const dailyData = useMemo(() => {
     const currentMonthTxs = transactions.filter(
@@ -72,6 +76,9 @@ export function ExpenseCharts({
     const labels = Object.keys(daysMap).map((d) => `Tgl ${d}`);
     const data = Object.values(daysMap);
 
+    const strokeColor = isPink ? '#e11d48' : darkMode ? '#60a5fa' : '#2563EB';
+    const fillColor = isPink ? 'rgba(225, 29, 72, 0.12)' : darkMode ? 'rgba(96, 165, 250, 0.12)' : 'rgba(37, 99, 235, 0.12)';
+
     return {
       labels,
       datasets: [
@@ -79,16 +86,16 @@ export function ExpenseCharts({
           label: 'Pengeluaran Harian (Rp)',
           data,
           fill: true,
-          borderColor: '#2563EB',
-          backgroundColor: 'rgba(37, 99, 235, 0.12)',
+          borderColor: strokeColor,
+          backgroundColor: fillColor,
           tension: 0.35,
           pointRadius: 3,
           pointHoverRadius: 6,
-          pointBackgroundColor: '#2563EB',
+          pointBackgroundColor: strokeColor,
         },
       ],
     };
-  }, [transactions, currentMonth]);
+  }, [transactions, currentMonth, isPink, darkMode]);
 
   // 2. Category Breakdown (Doughnut)
   const categoryData = useMemo(() => {
@@ -199,9 +206,9 @@ export function ExpenseCharts({
     };
   }, [transactions, currentMonth]);
 
-  const tickColor = darkMode ? '#94a3b8' : '#64748b';
-  const gridColor = darkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)';
-  const legendColor = darkMode ? '#e2e8f0' : '#334155';
+  const tickColor = isPink ? '#8c6878' : darkMode ? '#94a3b8' : '#64748b';
+  const gridColor = isPink ? 'rgba(225, 29, 72, 0.08)' : darkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)';
+  const legendColor = isPink ? '#2d141e' : darkMode ? '#e2e8f0' : '#334155';
 
   const currencyTooltipOptions = {
     callbacks: {
