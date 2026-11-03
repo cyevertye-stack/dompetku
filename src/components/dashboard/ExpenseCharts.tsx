@@ -49,7 +49,9 @@ export function ExpenseCharts({
 }: ExpenseChartsProps) {
   // 1. Daily Expenses (Current Month)
   const dailyData = useMemo(() => {
-    const currentMonthTxs = transactions.filter((t) => t.date.startsWith(currentMonth));
+    const currentMonthTxs = transactions.filter(
+      (t) => t.date.startsWith(currentMonth) && t.type !== 'income'
+    );
     const [y, m] = currentMonth.split('-').map(Number);
     const daysInMonth = y && m ? new Date(y, m, 0).getDate() : 30;
 
@@ -88,7 +90,9 @@ export function ExpenseCharts({
 
   // 2. Category Breakdown (Doughnut)
   const categoryData = useMemo(() => {
-    const currentMonthTxs = transactions.filter((t) => t.date.startsWith(currentMonth));
+    const currentMonthTxs = transactions.filter(
+      (t) => t.date.startsWith(currentMonth) && t.type !== 'income'
+    );
     const catMap: Record<string, { name: string; amount: number; color: string }> = {};
 
     categories.forEach((c) => {
@@ -166,7 +170,9 @@ export function ExpenseCharts({
 
   // 4. Payment Method Distribution
   const paymentMethodData = useMemo(() => {
-    const currentMonthTxs = transactions.filter((t) => t.date.startsWith(currentMonth));
+    const currentMonthTxs = transactions.filter(
+      (t) => t.date.startsWith(currentMonth) && t.type !== 'income'
+    );
     const methodMap: Record<string, number> = {};
 
     currentMonthTxs.forEach((t) => {

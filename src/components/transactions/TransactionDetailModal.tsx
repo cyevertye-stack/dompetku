@@ -29,19 +29,35 @@ export function TransactionDetailModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
       <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden transform transition-all">
         {/* Header Banner */}
-        <div className="p-6 bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900 text-white relative">
+        <div
+          className={`p-6 text-white relative transition-colors ${
+            transaction.type === 'income'
+              ? 'bg-gradient-to-r from-emerald-950 via-teal-900 to-slate-900'
+              : 'bg-gradient-to-r from-slate-900 via-rose-950 to-slate-900'
+          }`}
+        >
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 p-1.5 text-blue-200 hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer"
+            className="absolute top-4 right-4 p-1.5 text-slate-300 hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
-          <span className="inline-block px-2.5 py-1 bg-white/15 backdrop-blur-xs rounded-full text-xs font-semibold text-blue-200 uppercase tracking-wider mb-2">
-            Detail Pengeluaran
+          <span
+            className={`inline-block px-2.5 py-1 backdrop-blur-xs rounded-full text-xs font-semibold uppercase tracking-wider mb-2 ${
+              transaction.type === 'income'
+                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+            }`}
+          >
+            {transaction.type === 'income' ? 'Detail Pemasukan' : 'Detail Pengeluaran'}
           </span>
           <h2 className="text-xl font-bold tracking-tight">{transaction.title}</h2>
-          <div className="mt-3 text-2xl font-extrabold text-white">
-            {formatRupiah(transaction.amount)}
+          <div
+            className={`mt-3 text-2xl font-extrabold ${
+              transaction.type === 'income' ? 'text-emerald-400' : 'text-rose-400'
+            }`}
+          >
+            {transaction.type === 'income' ? '+' : '-'} {formatRupiah(transaction.amount)}
           </div>
         </div>
 

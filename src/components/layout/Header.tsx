@@ -19,6 +19,7 @@ interface HeaderProps {
   currentMonth: string;
   currentUser: UserType | null;
   darkMode: boolean;
+  activeTab?: string;
   onToggleDarkMode: () => void;
   onOpenAddModal: () => void;
   onQuickExport: () => void;
@@ -30,6 +31,7 @@ export function Header({
   currentMonth,
   currentUser,
   darkMode,
+  activeTab = 'dashboard',
   onToggleDarkMode,
   onOpenAddModal,
   onQuickExport,
@@ -84,14 +86,19 @@ export function Header({
           <span>Ekspor Excel</span>
         </button>
 
-        {/* Quick Add Expense Modal */}
-        <button
-          onClick={onOpenAddModal}
-          className="inline-flex items-center gap-1.5 px-4 py-2 text-xs sm:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-98 rounded-xl shadow-md shadow-blue-200 dark:shadow-none transition-all cursor-pointer"
-        >
-          <PlusCircle className="w-4 h-4" />
-          <span>+ Catat Pengeluaran</span>
-        </button>
+        {/* Quick Add Button:
+            - Disembunyikan di layar HP (karena HP sudah ada tombol bulat (+) di navigasi bawah)
+            - Di desktop, HANYA ditampilkan di tab 'dashboard' dan 'transactions' (tidak muncul di tabungan/anggaran/pengaturan)
+            - Menggunakan label '+ Catat Transaksi' karena mendukung Pengeluaran & Pemasukan */}
+        {(activeTab === 'dashboard' || activeTab === 'transactions') && (
+          <button
+            onClick={onOpenAddModal}
+            className="hidden sm:inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-98 rounded-xl shadow-md shadow-blue-200 dark:shadow-none transition-all cursor-pointer"
+          >
+            <PlusCircle className="w-4 h-4" />
+            <span>+ Catat Transaksi</span>
+          </button>
+        )}
 
         {/* User Pill & Logout */}
         {currentUser && (

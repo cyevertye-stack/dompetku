@@ -55,7 +55,7 @@ export function BottomNav({
           <button
             onClick={onOpenAddModal}
             className="w-13 h-13 bg-gradient-to-tr from-blue-700 via-blue-600 to-emerald-500 hover:scale-105 active:scale-95 text-white rounded-full flex items-center justify-center shadow-lg shadow-blue-500/40 border-4 border-white dark:border-slate-900 transition-all cursor-pointer"
-            title="Catat Pengeluaran Baru"
+            title="Catat Transaksi Baru (Pemasukan / Pengeluaran)"
           >
             <Plus className="w-6 h-6 stroke-[2.5]" />
           </button>

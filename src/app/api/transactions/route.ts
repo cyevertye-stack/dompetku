@@ -8,6 +8,7 @@ export async function GET(request: NextRequest) {
     const filter: TransactionFilter = {
       userId: searchParams.get('userId') || undefined,
       search: searchParams.get('search') || undefined,
+      type: (searchParams.get('type') as TransactionFilter['type']) || undefined,
       categoryId: searchParams.get('categoryId') || undefined,
       paymentMethod: searchParams.get('paymentMethod') || undefined,
       month: searchParams.get('month') || undefined,
@@ -65,6 +66,7 @@ export async function POST(request: NextRequest) {
       userId: body.userId || undefined,
       title: body.title.trim(),
       amount,
+      type: body.type === 'income' ? 'income' : 'expense',
       categoryId: body.categoryId,
       date: body.date,
       paymentMethod: body.paymentMethod || 'Tunai',

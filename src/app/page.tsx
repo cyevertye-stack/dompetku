@@ -290,14 +290,32 @@ export default function DompetKuApp() {
   // Dashboard Metrics Calculation
   const metrics: DashboardMetrics = useMemo(() => {
     const currentMonthTxs = transactions.filter((t) => t.date.startsWith(currentMonth));
-    const totalThisMonth = currentMonthTxs.reduce((sum, t) => sum + t.amount, 0);
+
+    // Pengeluaran & Pemasukan Bulan Ini
+    const totalThisMonth = currentMonthTxs
+      .filter((t) => t.type !== 'income')
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    const incomeThisMonth = currentMonthTxs
+      .filter((t) => t.type === 'income')
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    const netCashflow = incomeThisMonth - totalThisMonth;
 
     const totalToday = transactions
-      .filter((t) => t.date === todayStr)
+      .filter((t) => t.type !== 'income' && t.date === todayStr)
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    const incomeToday = transactions
+      .filter((t) => t.type === 'income' && t.date === todayStr)
       .reduce((sum, t) => sum + t.amount, 0);
 
     const totalThisWeek = transactions
-      .filter((t) => t.date >= sevenDaysAgoStr && t.date <= todayStr)
+      .filter((t) => t.type !== 'income' && t.date >= sevenDaysAgoStr && t.date <= todayStr)
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    const incomeThisWeek = transactions
+      .filter((t) => t.type === 'income' && t.date >= sevenDaysAgoStr && t.date <= todayStr)
       .reduce((sum, t) => sum + t.amount, 0);
 
     const monthlyBudget = monthlyBudgets[currentMonth] || 0;
@@ -305,7 +323,7 @@ export default function DompetKuApp() {
     const budgetUsagePercent =
       monthlyBudget > 0 ? Math.round((totalThisMonth / monthlyBudget) * 100) : 0;
 
-    const prevMonthTxs = transactions.filter((t) => t.date.startsWith(prevMonth));
+    const prevMonthTxs = transactions.filter((t) => t.date.startsWith(prevMonth) && t.type !== 'income');
     const previousMonthTotal = prevMonthTxs.reduce((sum, t) => sum + t.amount, 0);
     const comparisonAmount = totalThisMonth - previousMonthTotal;
     const comparisonPercent =
@@ -314,7 +332,7 @@ export default function DompetKuApp() {
         : 0;
 
     const catMap: Record<string, number> = {};
-    currentMonthTxs.forEach((t) => {
+    currentMonthTxs.filter((t) => t.type !== 'income').forEach((t) => {
       catMap[t.categoryId] = (catMap[t.categoryId] || 0) + t.amount;
     });
 
@@ -335,8 +353,12 @@ export default function DompetKuApp() {
 
     return {
       totalThisMonth,
+      incomeThisMonth,
+      netCashflow,
       totalToday,
+      incomeToday,
       totalThisWeek,
+      incomeThisWeek,
       monthlyBudget,
       remainingBudget,
       budgetUsagePercent,
@@ -355,6 +377,10 @@ export default function DompetKuApp() {
   // Filtered transactions for the Transaksi tab
   const filteredTransactions = useMemo(() => {
     let list = [...transactions];
+
+    if (txFilter.type && txFilter.type !== 'all') {
+      list = list.filter((t) => (t.type || 'expense') === txFilter.type);
+    }
 
     if (txFilter.search && txFilter.search.trim() !== '') {
       const q = txFilter.search.toLowerCase().trim();
@@ -633,6 +659,7 @@ export default function DompetKuApp() {
           currentMonth={currentMonth}
           currentUser={currentUser}
           darkMode={darkMode}
+          activeTab={activeTab}
           onToggleDarkMode={toggleDarkMode}
           onOpenAddModal={() => {
             setEditingTransaction(null);

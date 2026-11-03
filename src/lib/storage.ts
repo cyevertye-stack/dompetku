@@ -92,6 +92,7 @@ export async function getTransactions(filter?: TransactionFilter): Promise<Trans
           userId: row.user_id,
           title: row.title,
           amount: Number(row.amount),
+          type: (row.type as 'expense' | 'income') || 'expense',
           categoryId: row.category_id,
           date: typeof row.date === 'string' ? row.date.split('T')[0] : row.date,
           paymentMethod: row.payment_method,
@@ -101,7 +102,13 @@ export async function getTransactions(filter?: TransactionFilter): Promise<Trans
         }));
 
         if (filter) {
-          if (filter.search && filter.search.trim() !== '') {
+          if (filter.type && filter.type !== 'all') {
+            list = list.filter((t) => (t.type || 'expense') === filter.type);
+          }
+          if (filter.type && filter.type !== 'all') {
+    list = list.filter((t) => (t.type || 'expense') === filter.type);
+  }
+  if (filter.search && filter.search.trim() !== '') {
             const q = filter.search.toLowerCase().trim();
             list = list.filter(
               (t) =>
@@ -156,6 +163,9 @@ export async function getTransactions(filter?: TransactionFilter): Promise<Trans
     return list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }
 
+  if (filter.type && filter.type !== 'all') {
+    list = list.filter((t) => (t.type || 'expense') === filter.type);
+  }
   if (filter.search && filter.search.trim() !== '') {
     const q = filter.search.toLowerCase().trim();
     list = list.filter(
@@ -230,6 +240,7 @@ export async function createTransaction(
   const now = new Date().toISOString();
   const newTx: Transaction = {
     ...payload,
+    type: payload.type || 'expense',
     id: `tx-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
     createdAt: now,
     updatedAt: now,
@@ -237,11 +248,12 @@ export async function createTransaction(
 
   if (hasSupabaseConfig) {
     try {
-      await supabase.from('transactions').insert({
+      const { error } = await supabase.from('transactions').insert({
         id: newTx.id,
         user_id: newTx.userId || null,
         title: newTx.title,
         amount: newTx.amount,
+        type: newTx.type || 'expense',
         category_id: newTx.categoryId,
         date: newTx.date,
         payment_method: newTx.paymentMethod,
@@ -249,6 +261,22 @@ export async function createTransaction(
         created_at: newTx.createdAt,
         updated_at: newTx.updatedAt,
       });
+
+      // If schema in Supabase has no 'type' column yet, retry without type column
+      if (error && error.message && error.message.toLowerCase().includes('type')) {
+        await supabase.from('transactions').insert({
+          id: newTx.id,
+          user_id: newTx.userId || null,
+          title: newTx.title,
+          amount: newTx.amount,
+          category_id: newTx.categoryId,
+          date: newTx.date,
+          payment_method: newTx.paymentMethod,
+          notes: newTx.notes || null,
+          created_at: newTx.createdAt,
+          updated_at: newTx.updatedAt,
+        });
+      }
     } catch (e) {
       // fallback
     }
@@ -272,6 +300,7 @@ export async function updateTransaction(
       const updatePayload: Record<string, any> = { updated_at: now };
       if (payload.title !== undefined) updatePayload.title = payload.title;
       if (payload.amount !== undefined) updatePayload.amount = payload.amount;
+      if (payload.type !== undefined) updatePayload.type = payload.type;
       if (payload.categoryId !== undefined) updatePayload.category_id = payload.categoryId;
       if (payload.date !== undefined) updatePayload.date = payload.date;
       if (payload.paymentMethod !== undefined) updatePayload.payment_method = payload.paymentMethod;

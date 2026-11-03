@@ -33,7 +33,12 @@ export async function generateExpenseExcel({
   const categoryMap = new Map<string, Category>();
   categories.forEach((c) => categoryMap.set(c.id, c));
 
-  const totalExpense = transactions.reduce((sum, t) => sum + t.amount, 0);
+  const totalExpense = transactions
+    .filter((t) => t.type !== 'income')
+    .reduce((sum, t) => sum + t.amount, 0);
+  const totalIncome = transactions
+    .filter((t) => t.type === 'income')
+    .reduce((sum, t) => sum + t.amount, 0);
   const remainingBudget = totalBudget > 0 ? totalBudget - totalExpense : 0;
 
   // -------------------------------------------------------------

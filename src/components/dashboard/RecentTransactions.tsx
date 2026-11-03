@@ -30,8 +30,8 @@ export function RecentTransactions({
     <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-sm font-bold text-slate-800">Transaksi Pengeluaran Terbaru</h3>
-          <p className="text-xs text-slate-400 mt-0.5">5 catatan transaksi terkini</p>
+          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">Transaksi Terbaru</h3>
+          <p className="text-xs text-slate-400 mt-0.5">5 catatan pengeluaran & pemasukan terkini</p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -90,8 +90,12 @@ export function RecentTransactions({
                 </div>
 
                 <div className="text-right shrink-0">
-                  <div className="text-sm font-bold text-rose-600">
-                    - {formatRupiah(tx.amount)}
+                  <div
+                    className={`text-sm font-bold ${
+                      tx.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
+                    }`}
+                  >
+                    {tx.type === 'income' ? '+' : '-'} {formatRupiah(tx.amount)}
                   </div>
                   <span className="text-[11px] text-slate-400 font-medium block mt-0.5">
                     {tx.paymentMethod}

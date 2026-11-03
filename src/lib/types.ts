@@ -98,6 +98,7 @@ export interface Transaction {
   userId?: string;
   title: string;
   amount: number;
+  type?: 'expense' | 'income'; // 'expense' = pengeluaran, 'income' = pemasukan
   categoryId: string;
   date: string; // YYYY-MM-DD
   paymentMethod: PaymentMethod;
@@ -126,6 +127,7 @@ export interface AppState {
 export interface TransactionFilter {
   userId?: string;
   search?: string;
+  type?: 'all' | 'expense' | 'income';
   categoryId?: string;
   paymentMethod?: string;
   month?: string; // YYYY-MM
@@ -135,9 +137,13 @@ export interface TransactionFilter {
 }
 
 export interface DashboardMetrics {
-  totalThisMonth: number;
+  totalThisMonth: number; // Pengeluaran bulan ini
+  incomeThisMonth: number; // Pemasukan bulan ini
+  netCashflow: number; // Pemasukan - Pengeluaran
   totalToday: number;
   totalThisWeek: number;
+  incomeToday: number;
+  incomeThisWeek: number;
   monthlyBudget: number;
   remainingBudget: number;
   budgetUsagePercent: number;

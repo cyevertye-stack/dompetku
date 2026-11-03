@@ -23,12 +23,13 @@ CREATE TABLE IF NOT EXISTS public.categories (
     updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 3. Tabel Transaksi Pengeluaran (transactions)
+-- 3. Tabel Transaksi Keuangan: Pengeluaran & Pemasukan (transactions)
 CREATE TABLE IF NOT EXISTS public.transactions (
     id TEXT PRIMARY KEY,
     user_id TEXT REFERENCES public.users(id) ON DELETE CASCADE,
     title TEXT NOT NULL,
     amount NUMERIC NOT NULL CHECK (amount > 0),
+    type TEXT DEFAULT 'expense', -- 'expense' (pengeluaran) atau 'income' (pemasukan)
     category_id TEXT REFERENCES public.categories(id) ON DELETE CASCADE,
     date DATE NOT NULL,
     payment_method TEXT DEFAULT 'Tunai',
@@ -36,6 +37,9 @@ CREATE TABLE IF NOT EXISTS public.transactions (
     created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+
+-- Migrasi jika tabel sudah ada sebelumnya:
+ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS type TEXT DEFAULT 'expense';
 
 -- 4. Tabel Anggaran Bulanan (monthly_budgets)
 CREATE TABLE IF NOT EXISTS public.monthly_budgets (

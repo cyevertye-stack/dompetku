@@ -27,7 +27,44 @@ export function TransactionFilter({
   categories,
 }: TransactionFilterProps) {
   return (
-    <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-3.5">
+    <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-3.5">
+      {/* Segmented Filter: Semua | Pengeluaran | Pemasukan */}
+      <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl gap-1">
+        <button
+          type="button"
+          onClick={() => onChange({ ...filter, type: 'all' })}
+          className={`flex-1 py-1.5 px-3 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+            !filter.type || filter.type === 'all'
+              ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          Semua Transaksi
+        </button>
+        <button
+          type="button"
+          onClick={() => onChange({ ...filter, type: 'expense' })}
+          className={`flex-1 py-1.5 px-3 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+            filter.type === 'expense'
+              ? 'bg-rose-600 text-white shadow-xs'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          Pengeluaran
+        </button>
+        <button
+          type="button"
+          onClick={() => onChange({ ...filter, type: 'income' })}
+          className={`flex-1 py-1.5 px-3 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+            filter.type === 'income'
+              ? 'bg-emerald-600 text-white shadow-xs'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          Pemasukan
+        </button>
+      </div>
+
       {/* Top Search bar & quick filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         {/* Search */}
