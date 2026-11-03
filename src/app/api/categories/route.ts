@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createCategory, deleteCategory, getCategories, updateCategory } from '@/lib/storage';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const categories = await getCategories();
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get('userId') || undefined;
+    const categories = await getCategories(userId);
     return NextResponse.json({ success: true, data: categories });
   } catch (error) {
     return NextResponse.json(
@@ -25,6 +27,7 @@ export async function POST(request: NextRequest) {
     }
 
     const newCat = await createCategory({
+      userId: body.userId || undefined,
       name: body.name.trim(),
       icon: body.icon || 'Tag',
       color: body.color || '#3B82F6',

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Target, AlertTriangle, AlertCircle, CheckCircle2, PlusCircle, Edit3 } from 'lucide-react';
+import { Target, AlertTriangle, AlertCircle, CheckCircle2, PlusCircle, Edit3, Tag } from 'lucide-react';
 import { Category, Transaction } from '@/lib/types';
 import { formatRupiah } from '@/lib/formatters';
 import { CategoryIcon } from '../ui/CategoryIcon';
@@ -13,6 +13,7 @@ interface BudgetOverviewProps {
   currentMonth: string;
   onOpenMonthlyBudgetModal: () => void;
   onEditCategory: (category: Category) => void;
+  onAddNewCategory?: () => void;
 }
 
 export function BudgetOverview({
@@ -22,6 +23,7 @@ export function BudgetOverview({
   currentMonth,
   onOpenMonthlyBudgetModal,
   onEditCategory,
+  onAddNewCategory,
 }: BudgetOverviewProps) {
   const currentMonthTxs = transactions.filter((t) => t.date.startsWith(currentMonth));
   const totalExpense = currentMonthTxs.reduce((sum, t) => sum + t.amount, 0);
@@ -46,7 +48,7 @@ export function BudgetOverview({
             <p className="text-xs sm:text-sm text-slate-300 mt-1">
               {monthlyBudget > 0
                 ? `Pengeluaran: ${formatRupiah(totalExpense)} (${usagePercent}% terpakai)`
-                : 'Tentukan batas pengeluaran untuk mengendalikan pengeluaran bulanan'}
+                : 'Tentukan batas pengeluaran untuk mengendalikan arus kas bulanan Anda'}
             </p>
           </div>
 
@@ -99,127 +101,153 @@ export function BudgetOverview({
       <div>
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-base font-bold text-slate-900">Anggaran Per Kategori</h3>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <h3 className="text-base font-bold text-slate-900 dark:text-white">
+              Anggaran Per Kategori
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Pantau batas pengeluaran spesifik untuk tiap kelompok kebutuhan
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {categories.map((cat) => {
-            const catTxs = currentMonthTxs.filter((t) => t.categoryId === cat.id);
-            const spent = catTxs.reduce((sum, t) => sum + t.amount, 0);
-            const limit = cat.budgetLimit || 0;
-            const percent = limit > 0 ? Math.round((spent / limit) * 100) : 0;
-            const remaining = limit > 0 ? limit - spent : 0;
-            const isOver = limit > 0 && spent > limit;
-            const isNear = limit > 0 && !isOver && percent >= 80;
-
-            return (
-              <div
-                key={cat.id}
-                className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
+        {categories.length === 0 ? (
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-200/80 dark:border-slate-800 text-center space-y-3">
+            <Tag className="w-10 h-10 text-slate-400 mx-auto" />
+            <h4 className="text-sm font-bold text-slate-800 dark:text-white">
+              Belum Ada Kategori untuk Dianggarkan
+            </h4>
+            <p className="text-xs text-slate-400 max-w-sm mx-auto">
+              Silakan buat kategori kebutuhan terlebih dahulu, lalu atur batas nominalnya.
+            </p>
+            {onAddNewCategory && (
+              <button
+                onClick={onAddNewCategory}
+                className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all cursor-pointer"
               >
-                <div>
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <CategoryIcon name={cat.icon} color={cat.color} size={20} />
+                + Tambah Kategori Sekarang
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {categories.map((cat) => {
+              const catTxs = currentMonthTxs.filter((t) => t.categoryId === cat.id);
+              const spent = catTxs.reduce((sum, t) => sum + t.amount, 0);
+              const limit = cat.budgetLimit || 0;
+              const percent = limit > 0 ? Math.round((spent / limit) * 100) : 0;
+              const remaining = limit > 0 ? limit - spent : 0;
+              const isOver = limit > 0 && spent > limit;
+              const isNear = limit > 0 && !isOver && percent >= 80;
+
+              return (
+                <div
+                  key={cat.id}
+                  className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <CategoryIcon name={cat.icon} color={cat.color} size={20} />
+                        <div>
+                          <h4 className="text-sm font-bold text-slate-800 dark:text-white">
+                            {cat.name}
+                          </h4>
+                          <span className="text-xs text-slate-400 font-medium">
+                            {catTxs.length} transaksi
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => onEditCategory(cat)}
+                        className="p-1.5 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+                        title="Ubah Anggaran Kategori"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {/* Spent vs Limit */}
+                    <div className="mt-4 flex items-baseline justify-between">
                       <div>
-                        <h4 className="text-sm font-bold text-slate-800">{cat.name}</h4>
-                        <span className="text-xs text-slate-400 font-medium">
-                          {catTxs.length} transaksi
+                        <span className="text-xs text-slate-400 block font-medium">Terpakai</span>
+                        <span className="text-lg font-black text-slate-900 dark:text-white">
+                          {formatRupiah(spent)}
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-xs text-slate-400 block font-medium">Batas</span>
+                        <span className="text-sm font-bold text-slate-600 dark:text-slate-300">
+                          {limit > 0 ? formatRupiah(limit) : 'Belum diatur'}
                         </span>
                       </div>
                     </div>
-                    <button
-                      onClick={() => onEditCategory(cat)}
-                      className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
-                      title="Ubah Anggaran Kategori"
-                    >
-                      <Edit3 className="w-4 h-4" />
-                    </button>
+
+                    {/* Category Progress Bar */}
+                    {limit > 0 ? (
+                      <div className="mt-3 space-y-1.5">
+                        <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all duration-500 ${
+                              isOver ? 'bg-rose-500' : isNear ? 'bg-amber-500' : 'bg-emerald-500'
+                            }`}
+                            style={{ width: `${Math.min(100, percent)}%` }}
+                          />
+                        </div>
+                        <div className="flex items-center justify-between text-[11px] font-semibold">
+                          <span
+                            className={
+                              isOver
+                                ? 'text-rose-600 dark:text-rose-400'
+                                : isNear
+                                ? 'text-amber-600 dark:text-amber-400'
+                                : 'text-emerald-600 dark:text-emerald-400'
+                            }
+                          >
+                            {percent}% terpakai
+                          </span>
+                          <span className="text-slate-400">
+                            {remaining >= 0
+                              ? `Sisa ${formatRupiah(remaining)}`
+                              : `Lebih -${formatRupiah(Math.abs(remaining))}`}
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="mt-3 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-400 italic">
+                        Klik ikon edit untuk mengatur batas anggaran kategori ini
+                      </div>
+                    )}
                   </div>
 
-                  {/* Spent vs Limit */}
-                  <div className="mt-4 flex items-baseline justify-between">
-                    <div>
-                      <span className="text-xs text-slate-400 block font-medium">Terpakai</span>
-                      <span className="text-lg font-black text-slate-900">
-                        {formatRupiah(spent)}
+                  {/* Status Badge */}
+                  {limit > 0 && (
+                    <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                      <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                        Status
                       </span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-xs text-slate-400 block font-medium">Batas</span>
-                      <span className="text-sm font-bold text-slate-600">
-                        {limit > 0 ? formatRupiah(limit) : 'Belum diatur'}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Category Progress Bar */}
-                  {limit > 0 ? (
-                    <div className="mt-3 space-y-1.5">
-                      <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all duration-500 ${
-                            isOver ? 'bg-rose-500' : isNear ? 'bg-amber-500' : 'bg-emerald-500'
-                          }`}
-                          style={{ width: `${Math.min(100, percent)}%` }}
-                        />
-                      </div>
-                      <div className="flex items-center justify-between text-[11px] font-semibold">
-                        <span
-                          className={
-                            isOver
-                              ? 'text-rose-600'
-                              : isNear
-                              ? 'text-amber-600'
-                              : 'text-emerald-600'
-                          }
-                        >
-                          {percent}% terpakai
+                      {isOver ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-600 bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded-md">
+                          <AlertCircle className="w-3.5 h-3.5" />
+                          <span>Melebihi Batas</span>
                         </span>
-                        <span className="text-slate-400">
-                          {remaining >= 0
-                            ? `Sisa ${formatRupiah(remaining)}`
-                            : `Lebih -${formatRupiah(Math.abs(remaining))}`}
+                      ) : isNear ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-md">
+                          <AlertTriangle className="w-3.5 h-3.5" />
+                          <span>Mendekati Batas</span>
                         </span>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="mt-3 pt-2 border-t border-slate-100 text-xs text-slate-400 italic">
-                      Klik ikon edit untuk mengatur batas anggaran
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Aman</span>
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>
-
-                {/* Status Badge */}
-                {limit > 0 && (
-                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                    <span className="text-xs text-slate-500 font-medium">Status</span>
-                    {isOver ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-md">
-                        <AlertCircle className="w-3.5 h-3.5" />
-                        <span>Melebihi Batas</span>
-                      </span>
-                    ) : isNear ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md">
-                        <AlertTriangle className="w-3.5 h-3.5" />
-                        <span>Mendekati Batas</span>
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span>Aman</span>
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

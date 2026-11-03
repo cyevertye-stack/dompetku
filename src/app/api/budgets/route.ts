@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getMonthlyBudgets, setMonthlyBudget } from '@/lib/storage';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const budgets = await getMonthlyBudgets();
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get('userId') || undefined;
+    const budgets = await getMonthlyBudgets(userId);
     return NextResponse.json({ success: true, data: budgets });
   } catch (error) {
     return NextResponse.json(
@@ -16,7 +18,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { monthYear, amount } = body;
+    const { monthYear, amount, userId } = body;
 
     if (!monthYear) {
       return NextResponse.json(
@@ -33,7 +35,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const saved = await setMonthlyBudget(monthYear, numAmount);
+    const saved = await setMonthlyBudget(monthYear, numAmount, userId);
     return NextResponse.json({ success: true, data: { monthYear, amount: saved } });
   } catch (error) {
     return NextResponse.json(

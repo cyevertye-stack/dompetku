@@ -10,7 +10,7 @@ import {
   getPreviousMonthString,
   getTodayString,
 } from '@/lib/formatters';
-import { Category, DashboardMetrics, PaymentMethod, Transaction, TransactionFilter as FilterType } from '@/lib/types';
+import { Category, DashboardMetrics, PaymentMethod, Transaction, TransactionFilter as FilterType, User } from '@/lib/types';
 import { Header } from '@/components/layout/Header';
 import { Sidebar, TabKey } from '@/components/layout/Sidebar';
 import { BottomNav } from '@/components/layout/BottomNav';
@@ -30,7 +30,8 @@ import { ReportOverview } from '@/components/reports/ReportOverview';
 import { BackupRestore } from '@/components/settings/BackupRestore';
 import { DeploymentGuideModal } from '@/components/settings/DeploymentGuideModal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { DEFAULT_CATEGORIES } from '@/lib/sample-data';
+import { AuthModal } from '@/components/auth/AuthModal';
+import { TEMPLATE_CATEGORIES } from '@/lib/sample-data';
 
 export default function DompetKuApp() {
   // Safe Date initialization on Client mount
@@ -40,10 +41,16 @@ export default function DompetKuApp() {
   const [sevenDaysAgoStr, setSevenDaysAgoStr] = useState('2026-10-27');
   const [isMounted, setIsMounted] = useState(false);
 
+  // Authentication State
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+
+  // Dark Mode State
+  const [darkMode, setDarkMode] = useState(false);
+
   // App Main State
   const [activeTab, setActiveTab] = useState<TabKey>('dashboard');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [monthlyBudgets, setMonthlyBudgets] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
 
@@ -81,14 +88,16 @@ export default function DompetKuApp() {
     sortBy: 'date-desc',
   });
 
-  // Load all initial data from API
-  const loadData = useCallback(async () => {
+  // Load all initial data for the current user
+  const loadData = useCallback(async (userId?: string) => {
     try {
       setIsLoading(true);
+      const userQuery = userId ? `?userId=${userId}` : '';
+
       const [txRes, catRes, budgetRes] = await Promise.all([
-        fetch('/api/transactions'),
-        fetch('/api/categories'),
-        fetch('/api/budgets'),
+        fetch(`/api/transactions${userQuery}`),
+        fetch(`/api/categories${userQuery}`),
+        fetch(`/api/budgets${userQuery}`),
       ]);
 
       const [txData, catData, budgetData] = await Promise.all([
@@ -107,12 +116,13 @@ export default function DompetKuApp() {
     }
   }, []);
 
+  // Initialize client side state
   useEffect(() => {
     setIsMounted(true);
     const currM = getCurrentMonthString();
     const prevM = getPreviousMonthString(currM);
     const tday = getTodayString();
-    
+
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     const sevenStr = sevenDaysAgo.toISOString().split('T')[0];
@@ -122,32 +132,69 @@ export default function DompetKuApp() {
     setTodayStr(tday);
     setSevenDaysAgoStr(sevenStr);
     setTxFilter((prev) => ({ ...prev, month: currM }));
-    loadData();
+
+    // Check Theme
+    const savedTheme = localStorage.getItem('dompetku-theme');
+    if (savedTheme === 'dark') {
+      setDarkMode(true);
+      document.documentElement.classList.add('dark');
+    }
+
+    // Check User Session
+    const savedUserStr = localStorage.getItem('dompetku-user');
+    if (savedUserStr) {
+      try {
+        const u = JSON.parse(savedUserStr);
+        setCurrentUser(u);
+        loadData(u.id);
+      } catch (e) {
+        loadData();
+      }
+    } else {
+      setIsLoading(false);
+    }
   }, [loadData]);
+
+  // Toggle Dark Mode
+  const toggleDarkMode = () => {
+    const nextMode = !darkMode;
+    setDarkMode(nextMode);
+    if (nextMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('dompetku-theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('dompetku-theme', 'light');
+    }
+  };
+
+  // Logout Handler
+  const handleLogout = () => {
+    localStorage.removeItem('dompetku-user');
+    setCurrentUser(null);
+    setTransactions([]);
+    setCategories([]);
+    setMonthlyBudgets({});
+  };
 
   // Dashboard Metrics Calculation
   const metrics: DashboardMetrics = useMemo(() => {
-    // Current Month Transactions
     const currentMonthTxs = transactions.filter((t) => t.date.startsWith(currentMonth));
     const totalThisMonth = currentMonthTxs.reduce((sum, t) => sum + t.amount, 0);
 
-    // Today Transactions
     const totalToday = transactions
       .filter((t) => t.date === todayStr)
       .reduce((sum, t) => sum + t.amount, 0);
 
-    // This Week Transactions (last 7 days)
     const totalThisWeek = transactions
       .filter((t) => t.date >= sevenDaysAgoStr && t.date <= todayStr)
       .reduce((sum, t) => sum + t.amount, 0);
 
-    // Budget
     const monthlyBudget = monthlyBudgets[currentMonth] || 0;
     const remainingBudget = monthlyBudget > 0 ? monthlyBudget - totalThisMonth : 0;
     const budgetUsagePercent =
       monthlyBudget > 0 ? Math.round((totalThisMonth / monthlyBudget) * 100) : 0;
 
-    // Previous Month Comparison
     const prevMonthTxs = transactions.filter((t) => t.date.startsWith(prevMonth));
     const previousMonthTotal = prevMonthTxs.reduce((sum, t) => sum + t.amount, 0);
     const comparisonAmount = totalThisMonth - previousMonthTotal;
@@ -156,7 +203,6 @@ export default function DompetKuApp() {
         ? Math.round(((totalThisMonth - previousMonthTotal) / previousMonthTotal) * 100)
         : 0;
 
-    // Top Category
     const catMap: Record<string, number> = {};
     currentMonthTxs.forEach((t) => {
       catMap[t.categoryId] = (catMap[t.categoryId] || 0) + t.amount;
@@ -190,7 +236,7 @@ export default function DompetKuApp() {
       comparisonPercent,
       comparisonAmount,
     };
-  }, [transactions, categories, monthlyBudgets, currentMonth, prevMonth, todayStr]);
+  }, [transactions, categories, monthlyBudgets, currentMonth, prevMonth, todayStr, sevenDaysAgoStr]);
 
   // Filtered transactions for the Transaksi tab
   const filteredTransactions = useMemo(() => {
@@ -241,11 +287,16 @@ export default function DompetKuApp() {
   const handleSaveTransaction = async (
     data: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>
   ) => {
+    const payload = {
+      ...data,
+      userId: currentUser?.id,
+    };
+
     if (editingTransaction) {
       const res = await fetch(`/api/transactions/${editingTransaction.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
       const result = await res.json();
       if (!res.ok) throw new Error(result.message);
@@ -258,14 +309,13 @@ export default function DompetKuApp() {
       const res = await fetch('/api/transactions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
       const result = await res.json();
       if (!res.ok) throw new Error(result.message);
 
       setTransactions((prev) => [result.data, ...prev]);
 
-      // Confetti celebration
       confetti({
         particleCount: 40,
         spread: 60,
@@ -296,11 +346,16 @@ export default function DompetKuApp() {
 
   // Category CRUD handlers
   const handleSaveCategory = async (data: Omit<Category, 'id'>) => {
+    const payload = {
+      ...data,
+      userId: currentUser?.id,
+    };
+
     if (editingCategory) {
       const res = await fetch('/api/categories', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: editingCategory.id, ...data }),
+        body: JSON.stringify({ id: editingCategory.id, ...payload }),
       });
       const result = await res.json();
       if (!res.ok) throw new Error(result.message);
@@ -313,7 +368,7 @@ export default function DompetKuApp() {
       const res = await fetch('/api/categories', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
       const result = await res.json();
       if (!res.ok) throw new Error(result.message);
@@ -342,12 +397,23 @@ export default function DompetKuApp() {
     });
   };
 
+  // 1-Click Load Template Categories
+  const handleLoadTemplateCategories = async () => {
+    for (const tpl of TEMPLATE_CATEGORIES) {
+      await handleSaveCategory(tpl);
+    }
+  };
+
   // Monthly Budget Save handler
   const handleSaveMonthlyBudget = async (amount: number) => {
     const res = await fetch('/api/budgets', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ monthYear: currentMonth, amount }),
+      body: JSON.stringify({
+        monthYear: currentMonth,
+        amount,
+        userId: currentUser?.id,
+      }),
     });
     const result = await res.json();
     if (!res.ok) throw new Error(result.message);
@@ -355,7 +421,7 @@ export default function DompetKuApp() {
     setMonthlyBudgets((prev) => ({ ...prev, [currentMonth]: amount }));
   };
 
-  // Excel Export Handler (streams `.xlsx` file)
+  // Excel Export Handler
   const handleExportExcel = async (filterParams: {
     periodLabel: string;
     month?: string;
@@ -367,7 +433,10 @@ export default function DompetKuApp() {
       const res = await fetch('/api/export-excel', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(filterParams),
+        body: JSON.stringify({
+          ...filterParams,
+          userId: currentUser?.id,
+        }),
       });
 
       if (!res.ok) throw new Error('Gagal mengekspor laporan Excel');
@@ -415,13 +484,27 @@ export default function DompetKuApp() {
   }
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-slate-100">
+    <div className="flex h-screen w-full overflow-hidden bg-slate-100 dark:bg-slate-950 transition-colors">
+      {/* If not logged in, show Auth Screen */}
+      {!currentUser && (
+        <AuthModal
+          onLoginSuccess={(user) => {
+            setCurrentUser(user);
+            loadData(user.id);
+          }}
+        />
+      )}
+
       {/* Desktop Sidebar */}
       <Sidebar
         activeTab={activeTab}
         onTabChange={setActiveTab}
         transactionCount={transactions.length}
         isOverBudget={metrics.remainingBudget < 0 && metrics.monthlyBudget > 0}
+        currentUser={currentUser}
+        darkMode={darkMode}
+        onToggleDarkMode={toggleDarkMode}
+        onLogout={handleLogout}
       />
 
       {/* Main Content Area */}
@@ -429,12 +512,16 @@ export default function DompetKuApp() {
         {/* Top Header */}
         <Header
           currentMonth={currentMonth}
+          currentUser={currentUser}
+          darkMode={darkMode}
+          onToggleDarkMode={toggleDarkMode}
           onOpenAddModal={() => {
             setEditingTransaction(null);
             setIsAddTxModalOpen(true);
           }}
           onQuickExport={handleQuickExport}
           onOpenSettings={() => setActiveTab('settings')}
+          onLogout={handleLogout}
         />
 
         {/* Scrollable Page Views */}
@@ -446,14 +533,14 @@ export default function DompetKuApp() {
                 {/* Greeting & Date */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
-                    <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                    <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
                       Ringkasan Pengeluaran Keuangan
                     </h2>
-                    <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-                      Pantau dan evaluasi arus kas keluar pribadi Anda secara real-time
+                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                      {currentUser ? `Halo, ${currentUser.name}!` : ''} Pantau dan kelola arus kas keluar Anda secara real-time
                     </p>
                   </div>
-                  <span className="text-xs font-semibold text-slate-500 bg-white px-3 py-1.5 rounded-xl border border-slate-200 self-start sm:self-auto">
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 self-start sm:self-auto shadow-2xs">
                     Hari ini: {formatDateIndonesian(todayStr, true)}
                   </span>
                 </div>
@@ -499,10 +586,10 @@ export default function DompetKuApp() {
               <div className="space-y-6 animate-in fade-in duration-300">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
-                    <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                    <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
                       Riwayat & Catatan Transaksi
                     </h2>
-                    <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
                       Kelola seluruh daftar pengeluaran uang Anda dengan pencarian dan filter lengkap
                     </p>
                   </div>
@@ -511,7 +598,7 @@ export default function DompetKuApp() {
                       setEditingTransaction(null);
                       setIsAddTxModalOpen(true);
                     }}
-                    className="flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-blue-200 transition-all cursor-pointer self-start sm:self-auto"
+                    className="flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-blue-200 dark:shadow-none transition-all cursor-pointer self-start sm:self-auto"
                   >
                     <span>+ Catat Pengeluaran</span>
                   </button>
@@ -564,6 +651,10 @@ export default function DompetKuApp() {
                     setEditingCategory(cat);
                     setIsCategoryModalOpen(true);
                   }}
+                  onAddNewCategory={() => {
+                    setEditingCategory(null);
+                    setIsCategoryModalOpen(true);
+                  }}
                 />
               </div>
             )}
@@ -583,6 +674,7 @@ export default function DompetKuApp() {
                     setIsCategoryModalOpen(true);
                   }}
                   onDelete={handleDeleteCategory}
+                  onLoadTemplateCategories={handleLoadTemplateCategories}
                 />
               </div>
             )}
@@ -591,10 +683,10 @@ export default function DompetKuApp() {
             {activeTab === 'reports' && (
               <div className="space-y-6 animate-in fade-in duration-300">
                 <div>
-                  <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                  <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
                     Laporan Keuangan & Ekspor Microsoft Excel
                   </h2>
-                  <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
                     Analisis mendalam pengeluaran dan unduh buku kerja Microsoft Excel (.xlsx) 3 Sheet profesional
                   </p>
                 </div>
@@ -614,16 +706,16 @@ export default function DompetKuApp() {
             {activeTab === 'settings' && (
               <div className="space-y-6 animate-in fade-in duration-300">
                 <div>
-                  <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                  <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
                     Pengaturan, Cadangan & Database Cloud
                   </h2>
-                  <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-                    Kelola backup data Anda serta panduan deploy ke Vercel dan PostgreSQL online
+                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                    Kelola akun Anda ({currentUser?.email}), backup data, serta panduan database Supabase
                   </p>
                 </div>
 
                 <BackupRestore
-                  onRefreshData={loadData}
+                  onRefreshData={() => loadData(currentUser?.id)}
                   onOpenDeploymentGuide={() => setIsDeploymentGuideOpen(true)}
                 />
               </div>

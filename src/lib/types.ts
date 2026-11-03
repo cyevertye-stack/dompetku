@@ -5,8 +5,16 @@ export type PaymentMethod =
   | 'Kartu Debit / Kredit'
   | 'Lainnya';
 
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  createdAt: string;
+}
+
 export interface Category {
   id: string;
+  userId?: string;
   name: string;
   icon: string;
   color: string;
@@ -16,6 +24,7 @@ export interface Category {
 
 export interface Transaction {
   id: string;
+  userId?: string;
   title: string;
   amount: number;
   categoryId: string;
@@ -27,17 +36,20 @@ export interface Transaction {
 }
 
 export interface MonthlyBudget {
+  userId?: string;
   monthYear: string; // YYYY-MM
   amount: number;
 }
 
 export interface AppState {
+  users?: User[];
   transactions: Transaction[];
   categories: Category[];
-  monthlyBudgets: Record<string, number>; // key: "YYYY-MM", value: amount
+  monthlyBudgets: Record<string, number>; // key: "userId:YYYY-MM" or "YYYY-MM"
 }
 
 export interface TransactionFilter {
+  userId?: string;
   search?: string;
   categoryId?: string;
   paymentMethod?: string;
@@ -57,6 +69,6 @@ export interface DashboardMetrics {
   totalTransactionsCount: number;
   topCategory: { name: string; amount: number; color: string } | null;
   previousMonthTotal: number;
-  comparisonPercent: number; // positive = increased expense, negative = decreased
+  comparisonPercent: number;
   comparisonAmount: number;
 }

@@ -5,18 +5,14 @@ import { DEFAULT_CATEGORIES, generateSampleTransactions } from './sample-data';
 import { getCurrentMonthString } from './formatters';
 import { hasSupabaseConfig, supabase } from './supabase';
 
-// Path for local persistent JSON database
 const DATA_DIR = path.join(process.cwd(), 'data');
 const DATA_FILE = path.join(DATA_DIR, 'dompetku.json');
 
 function getDefaultState(): AppState {
-  const currentMonth = getCurrentMonthString();
   return {
-    categories: DEFAULT_CATEGORIES,
-    transactions: generateSampleTransactions(),
-    monthlyBudgets: {
-      [currentMonth]: 3500000,
-    },
+    categories: [],
+    transactions: [],
+    monthlyBudgets: {},
   };
 }
 
@@ -35,15 +31,9 @@ function ensureDataFile(): AppState {
     const content = fs.readFileSync(DATA_FILE, 'utf-8');
     const parsed = JSON.parse(content) as AppState;
 
-    if (!parsed.categories || parsed.categories.length === 0) {
-      parsed.categories = DEFAULT_CATEGORIES;
-    }
-    if (!parsed.transactions) {
-      parsed.transactions = [];
-    }
-    if (!parsed.monthlyBudgets) {
-      parsed.monthlyBudgets = {};
-    }
+    if (!parsed.categories) parsed.categories = [];
+    if (!parsed.transactions) parsed.transactions = [];
+    if (!parsed.monthlyBudgets) parsed.monthlyBudgets = {};
 
     return parsed;
   } catch (error) {
@@ -58,7 +48,7 @@ function saveData(state: AppState): void {
     }
     fs.writeFileSync(DATA_FILE, JSON.stringify(state, null, 2), 'utf-8');
   } catch (error) {
-    // If running on readonly filesystem (e.g. Vercel lambda), ignore write error
+    // Ignore on readonly serverless environments
   }
 }
 
@@ -67,14 +57,21 @@ export async function getTransactions(filter?: TransactionFilter): Promise<Trans
   // 1. Try Supabase
   if (hasSupabaseConfig) {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('transactions')
         .select('*')
         .order('date', { ascending: false });
 
+      if (filter?.userId) {
+        query = query.eq('user_id', filter.userId);
+      }
+
+      const { data, error } = await query;
+
       if (!error && Array.isArray(data)) {
         let list: Transaction[] = data.map((row) => ({
           id: row.id,
+          userId: row.user_id,
           title: row.title,
           amount: Number(row.amount),
           categoryId: row.category_id,
@@ -123,13 +120,17 @@ export async function getTransactions(filter?: TransactionFilter): Promise<Trans
         return list;
       }
     } catch (err) {
-      // Fall through to local storage
+      // Fallback to local
     }
   }
 
   // 2. Fallback to Local Storage
   const state = ensureDataFile();
   let list = [...state.transactions];
+
+  if (filter?.userId) {
+    list = list.filter((t) => !t.userId || t.userId === filter.userId);
+  }
 
   if (!filter) {
     return list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -183,6 +184,7 @@ export async function getTransaction(id: string): Promise<Transaction | null> {
       if (!error && data) {
         return {
           id: data.id,
+          userId: data.user_id,
           title: data.title,
           amount: Number(data.amount),
           categoryId: data.category_id,
@@ -213,11 +215,11 @@ export async function createTransaction(
     updatedAt: now,
   };
 
-  // Try insert to Supabase
   if (hasSupabaseConfig) {
     try {
       await supabase.from('transactions').insert({
         id: newTx.id,
+        user_id: newTx.userId || null,
         title: newTx.title,
         amount: newTx.amount,
         category_id: newTx.categoryId,
@@ -228,11 +230,10 @@ export async function createTransaction(
         updated_at: newTx.updatedAt,
       });
     } catch (e) {
-      // Ignore error if fallback works
+      // fallback
     }
   }
 
-  // Also keep local copy
   const state = ensureDataFile();
   state.transactions.unshift(newTx);
   saveData(state);
@@ -298,13 +299,18 @@ export async function deleteTransaction(id: string): Promise<boolean> {
 }
 
 // CATEGORIES
-export async function getCategories(): Promise<Category[]> {
+export async function getCategories(userId?: string): Promise<Category[]> {
   if (hasSupabaseConfig) {
     try {
-      const { data, error } = await supabase.from('categories').select('*');
-      if (!error && Array.isArray(data) && data.length > 0) {
+      let query = supabase.from('categories').select('*');
+      if (userId) {
+        query = query.or(`user_id.eq.${userId},is_default.eq.true`);
+      }
+      const { data, error } = await query;
+      if (!error && Array.isArray(data)) {
         return data.map((row) => ({
           id: row.id,
+          userId: row.user_id,
           name: row.name,
           icon: row.icon || 'Tag',
           color: row.color || '#3B82F6',
@@ -318,7 +324,8 @@ export async function getCategories(): Promise<Category[]> {
   }
 
   const state = ensureDataFile();
-  return state.categories;
+  if (!userId) return state.categories;
+  return state.categories.filter((c) => !c.userId || c.userId === userId);
 }
 
 export async function createCategory(payload: Omit<Category, 'id'>): Promise<Category> {
@@ -331,6 +338,7 @@ export async function createCategory(payload: Omit<Category, 'id'>): Promise<Cat
     try {
       await supabase.from('categories').insert({
         id: newCat.id,
+        user_id: newCat.userId || null,
         name: newCat.name,
         icon: newCat.icon,
         color: newCat.color,
@@ -404,10 +412,14 @@ export async function deleteCategory(id: string): Promise<{ success: boolean; me
 }
 
 // BUDGETS
-export async function getMonthlyBudgets(): Promise<Record<string, number>> {
+export async function getMonthlyBudgets(userId?: string): Promise<Record<string, number>> {
   if (hasSupabaseConfig) {
     try {
-      const { data, error } = await supabase.from('monthly_budgets').select('*');
+      let query = supabase.from('monthly_budgets').select('*');
+      if (userId) {
+        query = query.eq('user_id', userId);
+      }
+      const { data, error } = await query;
       if (!error && Array.isArray(data)) {
         const budgetsMap: Record<string, number> = {};
         data.forEach((row) => {
@@ -421,16 +433,34 @@ export async function getMonthlyBudgets(): Promise<Record<string, number>> {
   }
 
   const state = ensureDataFile();
-  return state.monthlyBudgets || {};
+  const budgetsMap: Record<string, number> = {};
+  Object.entries(state.monthlyBudgets || {}).forEach(([k, v]) => {
+    if (userId) {
+      if (k.startsWith(`${userId}:`)) {
+        budgetsMap[k.replace(`${userId}:`, '')] = v;
+      } else if (!k.includes(':')) {
+        budgetsMap[k] = v;
+      }
+    } else {
+      budgetsMap[k] = v;
+    }
+  });
+
+  return budgetsMap;
 }
 
-export async function setMonthlyBudget(monthYear: string, amount: number): Promise<number> {
+export async function setMonthlyBudget(
+  monthYear: string,
+  amount: number,
+  userId?: string
+): Promise<number> {
   const safeAmount = Math.max(0, amount);
 
   if (hasSupabaseConfig) {
     try {
       await supabase.from('monthly_budgets').upsert({
         month_year: monthYear,
+        user_id: userId || null,
         amount: safeAmount,
         updated_at: new Date().toISOString(),
       });
@@ -443,17 +473,18 @@ export async function setMonthlyBudget(monthYear: string, amount: number): Promi
   if (!state.monthlyBudgets) {
     state.monthlyBudgets = {};
   }
-  state.monthlyBudgets[monthYear] = safeAmount;
+  const key = userId ? `${userId}:${monthYear}` : monthYear;
+  state.monthlyBudgets[key] = safeAmount;
   saveData(state);
   return safeAmount;
 }
 
 // BACKUP & RESTORE
-export async function getAppState(): Promise<AppState> {
+export async function getAppState(userId?: string): Promise<AppState> {
   const [categories, transactions, monthlyBudgets] = await Promise.all([
-    getCategories(),
-    getTransactions(),
-    getMonthlyBudgets(),
+    getCategories(userId),
+    getTransactions(userId ? { userId } : undefined),
+    getMonthlyBudgets(userId),
   ]);
 
   return { categories, transactions, monthlyBudgets };
@@ -467,21 +498,53 @@ export async function restoreAppState(newState: AppState): Promise<boolean> {
   return true;
 }
 
-export async function seedDemoData(): Promise<AppState> {
-  const defaultState = getDefaultState();
-  saveData(defaultState);
-  return defaultState;
+export async function seedDemoData(userId?: string): Promise<AppState> {
+  const sample = generateSampleTransactions();
+  const currentMonth = getCurrentMonthString();
+  const state = ensureDataFile();
+
+  const newCategories: Category[] = [
+    {
+      id: `cat-makanan-${Date.now()}`,
+      userId,
+      name: 'Makanan & Minuman',
+      icon: 'Utensils',
+      color: '#F97316',
+      budgetLimit: 1500000,
+    },
+    {
+      id: `cat-transportasi-${Date.now()}`,
+      userId,
+      name: 'Transportasi',
+      icon: 'Car',
+      color: '#3B82F6',
+      budgetLimit: 600000,
+    },
+    {
+      id: `cat-belanja-${Date.now()}`,
+      userId,
+      name: 'Belanja',
+      icon: 'ShoppingBag',
+      color: '#EC4899',
+      budgetLimit: 500000,
+    },
+  ];
+
+  state.categories = [...state.categories, ...newCategories];
+  saveData(state);
+  return state;
 }
 
-export async function resetAllData(): Promise<AppState> {
-  const currentMonth = getCurrentMonthString();
-  const cleanState: AppState = {
-    categories: DEFAULT_CATEGORIES,
-    transactions: [],
-    monthlyBudgets: {
-      [currentMonth]: 0,
-    },
-  };
-  saveData(cleanState);
-  return cleanState;
+export async function resetAllData(userId?: string): Promise<AppState> {
+  const state = ensureDataFile();
+  if (userId) {
+    state.transactions = state.transactions.filter((t) => t.userId !== userId);
+    state.categories = state.categories.filter((c) => c.userId !== userId);
+  } else {
+    state.transactions = [];
+    state.categories = [];
+    state.monthlyBudgets = {};
+  }
+  saveData(state);
+  return state;
 }

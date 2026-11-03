@@ -6,6 +6,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const filter: TransactionFilter = {
+      userId: searchParams.get('userId') || undefined,
       search: searchParams.get('search') || undefined,
       categoryId: searchParams.get('categoryId') || undefined,
       paymentMethod: searchParams.get('paymentMethod') || undefined,
@@ -61,6 +62,7 @@ export async function POST(request: NextRequest) {
     }
 
     const newTx = await createTransaction({
+      userId: body.userId || undefined,
       title: body.title.trim(),
       amount,
       categoryId: body.categoryId,
