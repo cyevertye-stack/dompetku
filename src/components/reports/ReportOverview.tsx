@@ -155,7 +155,7 @@ export function ReportOverview({
   return (
     <div className="space-y-6">
       {/* Top Card: Period Filter & Excel Export Button */}
-      <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4 transition-colors">
         {/* Period Selector Tabs */}
         <div className="flex flex-wrap items-center gap-2">
           <button
@@ -163,7 +163,7 @@ export function ReportOverview({
             className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               periodType === 'this-month'
                 ? 'bg-blue-600 text-white shadow-xs'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
             }`}
           >
             Bulan Ini
@@ -173,7 +173,7 @@ export function ReportOverview({
             className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               periodType === 'last-month'
                 ? 'bg-blue-600 text-white shadow-xs'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
             }`}
           >
             Bulan Lalu
@@ -183,7 +183,7 @@ export function ReportOverview({
             className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               periodType === 'this-year'
                 ? 'bg-blue-600 text-white shadow-xs'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
             }`}
           >
             Tahun Ini
@@ -193,7 +193,7 @@ export function ReportOverview({
             className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               periodType === 'custom'
                 ? 'bg-blue-600 text-white shadow-xs'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
             }`}
           >
             Rentang Kustom
@@ -204,7 +204,7 @@ export function ReportOverview({
         <button
           onClick={handleExport}
           disabled={isExporting}
-          className="flex items-center justify-center gap-2.5 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-extrabold text-sm rounded-xl shadow-md shadow-emerald-200 transition-all cursor-pointer disabled:opacity-50 shrink-0"
+          className="flex items-center justify-center gap-2.5 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-extrabold text-sm rounded-xl shadow-md shadow-emerald-500/20 transition-all cursor-pointer disabled:opacity-50 shrink-0"
         >
           <FileSpreadsheet className="w-5 h-5" />
           <span>{isExporting ? 'Mengekspor Excel...' : 'Ekspor ke Microsoft Excel (.xlsx)'}</span>
@@ -213,26 +213,26 @@ export function ReportOverview({
 
       {/* Custom Date Range Pickers if active */}
       {periodType === 'custom' && (
-        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex flex-wrap items-center gap-4 text-xs font-medium">
+        <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-wrap items-center gap-4 text-xs font-medium">
           <div className="flex items-center gap-2">
-            <span className="text-slate-500 font-bold">Dari:</span>
+            <span className="text-slate-500 dark:text-slate-400 font-bold">Dari:</span>
             <input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-slate-800 text-xs focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              className="px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white text-xs focus:ring-2 focus:ring-blue-500 cursor-pointer"
             />
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-slate-500 font-bold">Sampai:</span>
+            <span className="text-slate-500 dark:text-slate-400 font-bold">Sampai:</span>
             <input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-slate-800 text-xs focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              className="px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white text-xs focus:ring-2 focus:ring-blue-500 cursor-pointer"
             />
           </div>
-          <span className="text-blue-600 font-semibold">
+          <span className="text-blue-600 dark:text-blue-400 font-semibold">
             Periode terpilih: {periodLabel}
           </span>
         </div>
@@ -241,53 +241,53 @@ export function ReportOverview({
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Expense */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs transition-colors">
           <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
             Total Pengeluaran Periode
           </span>
-          <div className="mt-2 text-2xl font-black text-rose-600 tracking-tight">
+          <div className="mt-2 text-2xl font-black text-rose-600 dark:text-rose-400 tracking-tight">
             {formatRupiah(totalExpense)}
           </div>
-          <span className="text-xs text-slate-500 mt-1 block font-medium">
+          <span className="text-xs text-slate-500 dark:text-slate-400 mt-1 block font-medium">
             {periodLabel}
           </span>
         </div>
 
         {/* Daily Average */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs transition-colors">
           <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
             Rata-rata Harian
           </span>
-          <div className="mt-2 text-2xl font-black text-slate-800 tracking-tight">
+          <div className="mt-2 text-2xl font-black text-slate-800 dark:text-white tracking-tight">
             {formatRupiah(dailyAverage)}
           </div>
-          <span className="text-xs text-slate-500 mt-1 block font-medium">
+          <span className="text-xs text-slate-500 dark:text-slate-400 mt-1 block font-medium">
             Berdasarkan rentang {daysCount} hari
           </span>
         </div>
 
         {/* Largest Expense */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs transition-colors">
           <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
             Pengeluaran Terbesar
           </span>
-          <div className="mt-2 text-2xl font-black text-slate-800 tracking-tight">
+          <div className="mt-2 text-2xl font-black text-slate-800 dark:text-white tracking-tight">
             {formatRupiah(largestExpense)}
           </div>
-          <span className="text-xs text-slate-500 mt-1 block font-medium">
+          <span className="text-xs text-slate-500 dark:text-slate-400 mt-1 block font-medium">
             Transaksi tunggal maksimum
           </span>
         </div>
 
         {/* Total Count */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs transition-colors">
           <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
             Jumlah Transaksi
           </span>
-          <div className="mt-2 text-2xl font-black text-slate-800 tracking-tight">
+          <div className="mt-2 text-2xl font-black text-slate-800 dark:text-white tracking-tight">
             {filteredTxs.length}
           </div>
-          <span className="text-xs text-slate-500 mt-1 block font-medium">
+          <span className="text-xs text-slate-500 dark:text-slate-400 mt-1 block font-medium">
             Catatan transaksi tersimpan
           </span>
         </div>
@@ -296,18 +296,18 @@ export function ReportOverview({
       {/* Grid: Category Breakdown & Payment Method Breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Category Breakdown Table */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-4 transition-colors">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-800">
+            <h3 className="text-sm font-bold text-slate-800 dark:text-white">
               Pengeluaran Berdasarkan Kategori
             </h3>
-            <span className="text-xs font-semibold px-2 py-0.5 bg-blue-50 text-blue-700 rounded-md">
+            <span className="text-xs font-semibold px-2 py-0.5 bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 rounded-md">
               {categoryStats.length} Kategori
             </span>
           </div>
 
           {categoryStats.length === 0 ? (
-            <p className="text-xs text-slate-400 py-6 text-center">
+            <p className="text-xs text-slate-400 dark:text-slate-500 py-6 text-center">
               Belum ada data pengeluaran pada periode ini.
             </p>
           ) : (
@@ -321,11 +321,11 @@ export function ReportOverview({
                         color={item.cat.color}
                         size={14}
                       />
-                      <span className="font-bold text-slate-800">{item.cat.name}</span>
+                      <span className="font-bold text-slate-800 dark:text-white">{item.cat.name}</span>
                       <span className="text-slate-400">({item.count} tx)</span>
                     </div>
                     <div className="text-right">
-                      <span className="font-bold text-slate-800">
+                      <span className="font-bold text-slate-800 dark:text-white">
                         {formatRupiah(item.amount)}
                       </span>
                       <span className="text-slate-400 ml-1.5 font-medium">
@@ -333,7 +333,7 @@ export function ReportOverview({
                       </span>
                     </div>
                   </div>
-                  <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                  <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all duration-500"
                       style={{
@@ -349,18 +349,18 @@ export function ReportOverview({
         </div>
 
         {/* Payment Methods Breakdown */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-4 transition-colors">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-800">
+            <h3 className="text-sm font-bold text-slate-800 dark:text-white">
               Pengeluaran Berdasarkan Metode Bayar
             </h3>
-            <span className="text-xs font-semibold px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-md">
+            <span className="text-xs font-semibold px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 rounded-md">
               {paymentMethodStats.length} Metode
             </span>
           </div>
 
           {paymentMethodStats.length === 0 ? (
-            <p className="text-xs text-slate-400 py-6 text-center">
+            <p className="text-xs text-slate-400 dark:text-slate-500 py-6 text-center">
               Belum ada data transaksi pada periode ini.
             </p>
           ) : (
@@ -368,9 +368,9 @@ export function ReportOverview({
               {paymentMethodStats.map((item) => (
                 <div key={item.method} className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-slate-800">{item.method}</span>
+                    <span className="font-bold text-slate-800 dark:text-white">{item.method}</span>
                     <div className="text-right">
-                      <span className="font-bold text-slate-800">
+                      <span className="font-bold text-slate-800 dark:text-white">
                         {formatRupiah(item.amount)}
                       </span>
                       <span className="text-slate-400 ml-1.5 font-medium">
@@ -378,7 +378,7 @@ export function ReportOverview({
                       </span>
                     </div>
                   </div>
-                  <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                  <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
                     <div
                       className="h-full bg-emerald-500 rounded-full transition-all duration-500"
                       style={{ width: `${item.percent}%` }}

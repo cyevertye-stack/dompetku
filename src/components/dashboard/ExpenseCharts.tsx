@@ -40,12 +40,14 @@ interface ExpenseChartsProps {
   transactions: Transaction[];
   categories: Category[];
   currentMonth: string;
+  darkMode?: boolean;
 }
 
 export function ExpenseCharts({
   transactions,
   categories,
   currentMonth,
+  darkMode = false,
 }: ExpenseChartsProps) {
   // 1. Daily Expenses (Current Month)
   const dailyData = useMemo(() => {
@@ -197,6 +199,10 @@ export function ExpenseCharts({
     };
   }, [transactions, currentMonth]);
 
+  const tickColor = darkMode ? '#94a3b8' : '#64748b';
+  const gridColor = darkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)';
+  const legendColor = darkMode ? '#e2e8f0' : '#334155';
+
   const currencyTooltipOptions = {
     callbacks: {
       label: (context: any) => {
@@ -209,14 +215,14 @@ export function ExpenseCharts({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Chart 1: Daily Trend */}
-      <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
+      <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col justify-between transition-colors">
         <div>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-sm font-bold text-slate-800">Tren Pengeluaran Harian</h3>
-              <p className="text-xs text-slate-400 mt-0.5">Bulan berjalan</p>
+              <h3 className="text-sm font-bold text-slate-800 dark:text-white">Tren Pengeluaran Harian</h3>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Bulan berjalan</p>
             </div>
-            <span className="text-xs font-semibold px-2.5 py-1 bg-blue-50 text-blue-700 rounded-lg">
+            <span className="text-xs font-semibold px-2.5 py-1 bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 rounded-lg">
               Area Chart
             </span>
           </div>
@@ -233,12 +239,14 @@ export function ExpenseCharts({
                 scales: {
                   x: {
                     grid: { display: false },
-                    ticks: { maxTicksLimit: 10, font: { size: 10 } },
+                    ticks: { maxTicksLimit: 10, font: { size: 10 }, color: tickColor },
                   },
                   y: {
                     beginAtZero: true,
+                    grid: { color: gridColor },
                     ticks: {
                       font: { size: 10 },
+                      color: tickColor,
                       callback: (val) => formatRupiah(Number(val), false),
                     },
                   },
@@ -250,14 +258,14 @@ export function ExpenseCharts({
       </div>
 
       {/* Chart 2: Category Donut */}
-      <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
+      <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col justify-between transition-colors">
         <div>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-sm font-bold text-slate-800">Proporsi Berdasarkan Kategori</h3>
-              <p className="text-xs text-slate-400 mt-0.5">Bulan berjalan</p>
+              <h3 className="text-sm font-bold text-slate-800 dark:text-white">Proporsi Berdasarkan Kategori</h3>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Bulan berjalan</p>
             </div>
-            <span className="text-xs font-semibold px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-lg">
+            <span className="text-xs font-semibold px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 rounded-lg">
               Donut Chart
             </span>
           </div>
@@ -272,14 +280,14 @@ export function ExpenseCharts({
                   plugins: {
                     legend: {
                       position: 'right',
-                      labels: { boxWidth: 12, font: { size: 11 }, padding: 12 },
+                      labels: { boxWidth: 12, font: { size: 11 }, padding: 12, color: legendColor },
                     },
                     tooltip: currencyTooltipOptions,
                   },
                 }}
               />
             ) : (
-              <div className="text-center text-slate-400 text-xs py-12">
+              <div className="text-center text-slate-400 dark:text-slate-500 text-xs py-12">
                 Belum ada transaksi di bulan ini
               </div>
             )}
@@ -288,14 +296,14 @@ export function ExpenseCharts({
       </div>
 
       {/* Chart 3: Monthly Comparison */}
-      <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
+      <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col justify-between transition-colors">
         <div>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-sm font-bold text-slate-800">Perbandingan Pengeluaran Antar Bulan</h3>
-              <p className="text-xs text-slate-400 mt-0.5">6 Bulan Terakhir</p>
+              <h3 className="text-sm font-bold text-slate-800 dark:text-white">Perbandingan Pengeluaran Antar Bulan</h3>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">6 Bulan Terakhir</p>
             </div>
-            <span className="text-xs font-semibold px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-lg">
+            <span className="text-xs font-semibold px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 rounded-lg">
               Bar Chart
             </span>
           </div>
@@ -312,12 +320,14 @@ export function ExpenseCharts({
                 scales: {
                   x: {
                     grid: { display: false },
-                    ticks: { font: { size: 11 } },
+                    ticks: { font: { size: 11 }, color: tickColor },
                   },
                   y: {
                     beginAtZero: true,
+                    grid: { color: gridColor },
                     ticks: {
                       font: { size: 10 },
+                      color: tickColor,
                       callback: (val) => formatRupiah(Number(val), false),
                     },
                   },
@@ -329,14 +339,14 @@ export function ExpenseCharts({
       </div>
 
       {/* Chart 4: Payment Methods */}
-      <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
+      <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col justify-between transition-colors">
         <div>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-sm font-bold text-slate-800">Distribusi Metode Pembayaran</h3>
-              <p className="text-xs text-slate-400 mt-0.5">Bulan berjalan</p>
+              <h3 className="text-sm font-bold text-slate-800 dark:text-white">Distribusi Metode Pembayaran</h3>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Bulan berjalan</p>
             </div>
-            <span className="text-xs font-semibold px-2.5 py-1 bg-amber-50 text-amber-700 rounded-lg">
+            <span className="text-xs font-semibold px-2.5 py-1 bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 rounded-lg">
               Horizontal Bar
             </span>
           </div>
@@ -355,20 +365,22 @@ export function ExpenseCharts({
                   scales: {
                     x: {
                       beginAtZero: true,
+                      grid: { color: gridColor },
                       ticks: {
                         font: { size: 10 },
+                        color: tickColor,
                         callback: (val) => formatRupiah(Number(val), false),
                       },
                     },
                     y: {
                       grid: { display: false },
-                      ticks: { font: { size: 10 } },
+                      ticks: { font: { size: 10 }, color: tickColor },
                     },
                   },
                 }}
               />
             ) : (
-              <div className="text-center text-slate-400 text-xs py-12">
+              <div className="text-center text-slate-400 dark:text-slate-500 text-xs py-12">
                 Belum ada transaksi di bulan ini
               </div>
             )}

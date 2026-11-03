@@ -712,6 +712,7 @@ export default function DompetKuApp() {
                   transactions={transactions}
                   categories={categories}
                   currentMonth={currentMonth}
+                  darkMode={darkMode}
                 />
 
                 {/* 4. Recent Transactions */}
@@ -737,7 +738,7 @@ export default function DompetKuApp() {
                       Riwayat & Catatan Transaksi
                     </h2>
                     <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-                      Kelola seluruh daftar pengeluaran uang Anda dengan pencarian dan filter lengkap
+                      Kelola seluruh daftar pengeluaran & pemasukan uang Anda dengan pencarian dan filter lengkap
                     </p>
                   </div>
                   <button
@@ -747,7 +748,7 @@ export default function DompetKuApp() {
                     }}
                     className="flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-blue-200 dark:shadow-none transition-all cursor-pointer self-start sm:self-auto"
                   >
-                    <span>+ Catat Pengeluaran</span>
+                    <span>+ Catat Transaksi</span>
                   </button>
                 </div>
 

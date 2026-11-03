@@ -26,8 +26,8 @@ export function TransactionDetailModal({
   if (!isOpen || !transaction) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden transform transition-all">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-200">
+      <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden transform transition-all">
         {/* Header Banner */}
         <div
           className={`p-6 text-white relative transition-colors ${
@@ -64,7 +64,7 @@ export function TransactionDetailModal({
         {/* Details list */}
         <div className="p-6 space-y-4">
           {/* Category */}
-          <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-slate-100">
+          <div className="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-3">
               <CategoryIcon
                 name={category?.icon || 'Tag'}
@@ -73,51 +73,51 @@ export function TransactionDetailModal({
               />
               <div>
                 <span className="text-xs text-slate-400 font-medium block">Kategori</span>
-                <span className="text-sm font-bold text-slate-800">
+                <span className="text-sm font-bold text-slate-800 dark:text-white">
                   {category?.name || 'Lain-lain'}
                 </span>
               </div>
             </div>
             {category?.budgetLimit ? (
-              <span className="text-xs text-slate-500 font-medium">
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                 Batas: {formatRupiah(category.budgetLimit)}
               </span>
             ) : null}
           </div>
 
           {/* Date */}
-          <div className="flex items-center gap-3 p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-            <div className="p-2.5 bg-blue-100/60 text-blue-700 rounded-xl">
+          <div className="flex items-center gap-3 p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-800">
+            <div className="p-2.5 bg-blue-100/60 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 rounded-xl">
               <Calendar className="w-5 h-5" />
             </div>
             <div>
               <span className="text-xs text-slate-400 font-medium block">Tanggal Transaksi</span>
-              <span className="text-sm font-bold text-slate-800">
+              <span className="text-sm font-bold text-slate-800 dark:text-white">
                 {formatDateIndonesian(transaction.date, true)}
               </span>
             </div>
           </div>
 
           {/* Payment Method */}
-          <div className="flex items-center gap-3 p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-            <div className="p-2.5 bg-emerald-100/60 text-emerald-700 rounded-xl">
+          <div className="flex items-center gap-3 p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-800">
+            <div className="p-2.5 bg-emerald-100/60 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 rounded-xl">
               <CreditCard className="w-5 h-5" />
             </div>
             <div>
               <span className="text-xs text-slate-400 font-medium block">Metode Pembayaran</span>
-              <span className="text-sm font-bold text-slate-800">{transaction.paymentMethod}</span>
+              <span className="text-sm font-bold text-slate-800 dark:text-white">{transaction.paymentMethod}</span>
             </div>
           </div>
 
           {/* Notes */}
           {transaction.notes && (
-            <div className="flex items-start gap-3 p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-              <div className="p-2.5 bg-amber-100/60 text-amber-700 rounded-xl shrink-0">
+            <div className="flex items-start gap-3 p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-800">
+              <div className="p-2.5 bg-amber-100/60 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 rounded-xl shrink-0">
                 <FileText className="w-5 h-5" />
               </div>
               <div>
                 <span className="text-xs text-slate-400 font-medium block">Catatan Tambahan</span>
-                <p className="text-sm text-slate-700 mt-0.5 leading-relaxed">
+                <p className="text-sm text-slate-700 dark:text-slate-200 mt-0.5 leading-relaxed">
                   {transaction.notes}
                 </p>
               </div>
@@ -130,11 +130,11 @@ export function TransactionDetailModal({
         </div>
 
         {/* Action Buttons */}
-        <div className="p-4 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between gap-3">
+        <div className="p-4 bg-slate-50/80 dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
           <button
             type="button"
             onClick={() => onDelete(transaction)}
-            className="flex items-center gap-2 px-3.5 py-2 text-rose-600 hover:bg-rose-50 rounded-xl font-medium text-sm transition-colors cursor-pointer"
+            className="flex items-center gap-2 px-3.5 py-2 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl font-medium text-sm transition-colors cursor-pointer"
           >
             <Trash2 className="w-4 h-4" />
             <span>Hapus</span>
@@ -144,7 +144,7 @@ export function TransactionDetailModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-slate-600 hover:bg-slate-200/60 rounded-xl font-medium text-sm transition-colors cursor-pointer"
+              className="px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-800 rounded-xl font-medium text-sm transition-colors cursor-pointer"
             >
               Tutup
             </button>
@@ -154,7 +154,7 @@ export function TransactionDetailModal({
                 onClose();
                 onEdit(transaction);
               }}
-              className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-md shadow-blue-200 transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-md shadow-blue-500/20 transition-all cursor-pointer"
             >
               <Edit3 className="w-4 h-4" />
               <span>Edit</span>

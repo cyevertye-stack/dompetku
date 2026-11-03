@@ -188,18 +188,18 @@ export function BackupRestore({
       {/* 2. Backup & Restore Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Backup Card */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between space-y-4">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col justify-between space-y-4 transition-colors">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl">
+              <div className="p-2.5 bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 rounded-xl">
                 <Download className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="text-sm font-bold text-slate-800">Cadangkan Data (Backup JSON)</h4>
-                <p className="text-xs text-slate-400">Unduh seluruh catatan transaksi dan kategori</p>
+                <h4 className="text-sm font-bold text-slate-800 dark:text-white">Cadangkan Data (Backup JSON)</h4>
+                <p className="text-xs text-slate-400 dark:text-slate-500">Unduh seluruh catatan transaksi dan kategori</p>
               </div>
             </div>
-            <p className="text-xs text-slate-500 leading-relaxed mt-2">
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mt-2">
               Simpan salinan data Anda ke dalam file JSON di komputer atau HP Anda agar tidak pernah kehilangan riwayat keuangan pribadi.
             </p>
           </div>
@@ -207,7 +207,7 @@ export function BackupRestore({
           <button
             onClick={handleDownloadBackup}
             disabled={isProcessing}
-            className="flex items-center justify-center gap-2 w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer disabled:opacity-50"
+            className="flex items-center justify-center gap-2 w-full py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer disabled:opacity-50"
           >
             <Download className="w-4 h-4" />
             <span>Unduh Cadangan Data (.json)</span>
@@ -215,18 +215,18 @@ export function BackupRestore({
         </div>
 
         {/* Restore Card */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between space-y-4">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col justify-between space-y-4 transition-colors">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl">
+              <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 rounded-xl">
                 <Upload className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="text-sm font-bold text-slate-800">Pulihkan Data (Restore JSON)</h4>
-                <p className="text-xs text-slate-400">Unggah file backup JSON yang sebelumnya diunduh</p>
+                <h4 className="text-sm font-bold text-slate-800 dark:text-white">Pulihkan Data (Restore JSON)</h4>
+                <p className="text-xs text-slate-400 dark:text-slate-500">Unggah file backup JSON yang sebelumnya diunduh</p>
               </div>
             </div>
-            <p className="text-xs text-slate-500 leading-relaxed mt-2">
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mt-2">
               Muat kembali seluruh transaksi, anggaran, dan kategori dari file cadangan yang telah tersimpan.
             </p>
           </div>
@@ -252,10 +252,10 @@ export function BackupRestore({
       </div>
 
       {/* 3. Demo Data & Reset Actions */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
+      <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-4 transition-colors">
         <div>
-          <h4 className="text-sm font-bold text-slate-800">Pengelolaan Data Tambahan</h4>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <h4 className="text-sm font-bold text-slate-800 dark:text-white">Pengelolaan Data Tambahan</h4>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
             Muat data simulasi untuk pengetesan atau kosongkan catatan
           </p>
         </div>
@@ -271,7 +271,7 @@ export function BackupRestore({
                 action: handleSeedDemo,
               })
             }
-            className="flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs rounded-xl transition-all cursor-pointer"
+            className="flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2.5 bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 font-bold text-xs rounded-xl transition-all cursor-pointer"
           >
             <RefreshCw className="w-4 h-4" />
             <span>Muat Data Contoh (Demo)</span>
@@ -287,7 +287,7 @@ export function BackupRestore({
                 action: handleResetData,
               })
             }
-            className="flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs rounded-xl transition-all cursor-pointer"
+            className="flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2.5 bg-rose-50 dark:bg-rose-950/50 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-700 dark:text-rose-300 font-bold text-xs rounded-xl transition-all cursor-pointer"
           >
             <Trash2 className="w-4 h-4" />
             <span>Bersihkan Semua Transaksi</span>

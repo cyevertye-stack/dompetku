@@ -87,8 +87,8 @@ export function CategoryModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden transform transition-all max-h-[92vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-200">
+      <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden transform transition-all max-h-[92vh] flex flex-col">
         {/* Header */}
         <div className="px-6 py-5 bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900 text-white flex items-center justify-between">
           <div>
@@ -110,7 +110,7 @@ export function CategoryModal({
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-4 flex-1">
           {errorMessage && (
-            <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl">
+            <div className="p-3 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 text-xs rounded-xl font-medium">
               {errorMessage}
             </div>
           )}
@@ -119,7 +119,7 @@ export function CategoryModal({
           <div className="flex items-center gap-3">
             <CategoryIcon name={icon} color={color} size={24} />
             <div className="flex-1">
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
                 Nama Kategori <span className="text-rose-500">*</span>
               </label>
               <input
@@ -127,7 +127,7 @@ export function CategoryModal({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Contoh: Belanja Bulanan"
-                className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-slate-900 transition-all"
                 required
               />
             </div>
@@ -135,10 +135,10 @@ export function CategoryModal({
 
           {/* Icon Selector */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
               Pilih Ikon
             </label>
-            <div className="grid grid-cols-7 gap-2 max-h-36 overflow-y-auto p-2 bg-slate-50 border border-slate-200 rounded-xl">
+            <div className="grid grid-cols-7 gap-2 max-h-36 overflow-y-auto p-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl">
               {Object.keys(AVAILABLE_ICONS).map((iconKey) => {
                 const isSelected = icon === iconKey;
                 return (
@@ -149,7 +149,7 @@ export function CategoryModal({
                     className={`flex items-center justify-center p-2 rounded-xl transition-all cursor-pointer ${
                       isSelected
                         ? 'bg-blue-600 text-white shadow-xs'
-                        : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
+                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
                     }`}
                   >
                     <CategoryIcon
@@ -166,10 +166,10 @@ export function CategoryModal({
 
           {/* Color Selector */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
               Pilih Warna
             </label>
-            <div className="flex flex-wrap gap-2.5 p-2 bg-slate-50 border border-slate-200 rounded-xl">
+            <div className="flex flex-wrap gap-2.5 p-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl">
               {COLOR_PRESETS.map((hex) => {
                 const isSelected = color.toLowerCase() === hex.toLowerCase();
                 return (
@@ -189,7 +189,7 @@ export function CategoryModal({
 
           {/* Category Budget Limit */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
               Batas Anggaran Bulanan (Opsional)
             </label>
             <div className="relative">
@@ -206,11 +206,11 @@ export function CategoryModal({
                 }
                 onChange={(e) => setBudgetLimitStr(e.target.value.replace(/[^0-9]/g, ''))}
                 placeholder="0 (tidak ada batas)"
-                className="w-full pl-12 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm font-semibold focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                className="w-full pl-12 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white text-sm font-semibold focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-slate-900 transition-all"
               />
             </div>
             {parseRupiahInput(budgetLimitStr) > 0 && (
-              <p className="mt-1 text-xs text-blue-600 font-medium">
+              <p className="mt-1 text-xs text-blue-600 dark:text-blue-400 font-medium">
                 Batas:{' '}
                 {formatRupiah(parseRupiahInput(budgetLimitStr))} / bulan
               </p>
@@ -218,18 +218,18 @@ export function CategoryModal({
           </div>
 
           {/* Actions */}
-          <div className="pt-3 flex items-center justify-end gap-3 border-t border-slate-100">
+          <div className="pt-3 flex items-center justify-end gap-3 border-t border-slate-100 dark:border-slate-800">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+              className="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
             >
               Batal
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-5 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-md shadow-blue-200 transition-all cursor-pointer disabled:opacity-50"
+              className="px-5 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-md shadow-blue-500/20 transition-all cursor-pointer disabled:opacity-50"
             >
               {isSubmitting ? 'Menyimpan...' : initialData ? 'Perbarui Kategori' : 'Simpan Kategori'}
             </button>

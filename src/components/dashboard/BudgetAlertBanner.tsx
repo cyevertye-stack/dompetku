@@ -21,16 +21,16 @@ export function BudgetAlertBanner({
 }: BudgetAlertBannerProps) {
   if (monthlyBudget <= 0) {
     return (
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/80 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-slate-900/60 border border-blue-200/80 dark:border-blue-900/50 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors">
         <div className="flex items-start sm:items-center gap-3.5">
           <div className="p-2.5 bg-blue-600 text-white rounded-xl shadow-xs shrink-0">
             <Target className="w-5 h-5" />
           </div>
           <div>
-            <h4 className="text-sm font-bold text-slate-800">
+            <h4 className="text-sm font-bold text-slate-800 dark:text-white">
               Batas Anggaran Bulanan Belum Ditentukan
             </h4>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Tentukan batas anggaran bulan ini untuk mengontrol pengeluaran dan mencegah overbudget.
             </p>
           </div>
@@ -50,26 +50,26 @@ export function BudgetAlertBanner({
   const isNearBudget = !isOverBudget && budgetUsagePercent >= 80;
 
   // Determine styles
-  let bgColor = 'bg-emerald-50/70 border-emerald-200 text-emerald-950';
+  let bgColor = 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/60 text-emerald-950 dark:text-emerald-200';
   let progressColor = 'bg-emerald-500';
-  let icon = <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />;
+  let icon = <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />;
   let title = 'Pengeluaran Masih Terkendali Aman';
   let message = `Anda telah menggunakan ${budgetUsagePercent}% dari batas anggaran bulanan (${formatRupiah(
     totalExpense
   )} dari ${formatRupiah(monthlyBudget)}).`;
 
   if (isOverBudget) {
-    bgColor = 'bg-rose-50/90 border-rose-300 text-rose-950';
+    bgColor = 'bg-rose-50/90 dark:bg-rose-950/30 border-rose-300 dark:border-rose-800/60 text-rose-950 dark:text-rose-200';
     progressColor = 'bg-rose-600';
-    icon = <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />;
+    icon = <AlertCircle className="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0" />;
     title = 'PERINGATAN: Anggaran Bulan Ini Sudah Terlampaui!';
     message = `Pengeluaran Anda telah melebihi batas anggaran sebesar ${formatRupiah(
       Math.abs(remainingBudget)
     )} (${budgetUsagePercent}% terpakai). Harap rem pengeluaran non-esensial!`;
   } else if (isNearBudget) {
-    bgColor = 'bg-amber-50/80 border-amber-300 text-amber-950';
+    bgColor = 'bg-amber-50/80 dark:bg-amber-950/30 border-amber-300 dark:border-amber-800/60 text-amber-950 dark:text-amber-200';
     progressColor = 'bg-amber-500';
-    icon = <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />;
+    icon = <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />;
     title = 'Perhatian: Pengeluaran Mendekati Batas Anggaran';
     message = `Anda sudah memakai ${budgetUsagePercent}% dari total anggaran. Sisa anggaran hanya tinggal ${formatRupiah(
       remainingBudget
@@ -88,7 +88,7 @@ export function BudgetAlertBanner({
         </div>
         <button
           onClick={onOpenBudgetModal}
-          className="self-start sm:self-auto px-3 py-1.5 bg-white/80 hover:bg-white text-slate-800 text-xs font-bold rounded-lg border border-slate-200/60 shadow-2xs transition-colors cursor-pointer shrink-0"
+          className="self-start sm:self-auto px-3 py-1.5 bg-white/80 dark:bg-slate-800 hover:bg-white dark:hover:bg-slate-700 text-slate-800 dark:text-white text-xs font-bold rounded-lg border border-slate-200/60 dark:border-slate-700 shadow-2xs transition-colors cursor-pointer shrink-0"
         >
           Kelola Batas
         </button>
@@ -96,7 +96,7 @@ export function BudgetAlertBanner({
 
       {/* Progress Bar */}
       <div className="mt-3.5 space-y-1.5">
-        <div className="w-full bg-black/10 rounded-full h-2.5 overflow-hidden">
+        <div className="w-full bg-black/10 dark:bg-white/10 rounded-full h-2.5 overflow-hidden">
           <div
             className={`h-full rounded-full transition-all duration-500 ${progressColor}`}
             style={{ width: `${Math.min(100, budgetUsagePercent)}%` }}
