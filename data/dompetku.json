@@ -1,0 +1,279 @@
+{
+  "categories": [
+    {
+      "id": "cat-makanan",
+      "name": "Makanan & Minuman",
+      "icon": "Utensils",
+      "color": "#F97316",
+      "budgetLimit": 1500000,
+      "isDefault": true
+    },
+    {
+      "id": "cat-transportasi",
+      "name": "Transportasi",
+      "icon": "Car",
+      "color": "#3B82F6",
+      "budgetLimit": 600000,
+      "isDefault": true
+    },
+    {
+      "id": "cat-kuliah",
+      "name": "Kebutuhan Kuliah",
+      "icon": "GraduationCap",
+      "color": "#8B5CF6",
+      "budgetLimit": 800000,
+      "isDefault": true
+    },
+    {
+      "id": "cat-belanja",
+      "name": "Belanja",
+      "icon": "ShoppingBag",
+      "color": "#EC4899",
+      "budgetLimit": 500000,
+      "isDefault": true
+    },
+    {
+      "id": "cat-hiburan",
+      "name": "Hiburan",
+      "icon": "Film",
+      "color": "#EAB308",
+      "budgetLimit": 400000,
+      "isDefault": true
+    },
+    {
+      "id": "cat-tagihan",
+      "name": "Tagihan & Utilitas",
+      "icon": "Receipt",
+      "color": "#EF4444",
+      "budgetLimit": 750000,
+      "isDefault": true
+    },
+    {
+      "id": "cat-kesehatan",
+      "name": "Kesehatan",
+      "icon": "HeartPulse",
+      "color": "#10B981",
+      "budgetLimit": 300000,
+      "isDefault": true
+    },
+    {
+      "id": "cat-pribadi",
+      "name": "Kebutuhan Pribadi",
+      "icon": "User",
+      "color": "#06B6D4",
+      "budgetLimit": 450000,
+      "isDefault": true
+    },
+    {
+      "id": "cat-lainnya",
+      "name": "Lain-lain",
+      "icon": "MoreHorizontal",
+      "color": "#6B7280",
+      "budgetLimit": 250000,
+      "isDefault": true
+    }
+  ],
+  "transactions": [
+    {
+      "title": "Beli Kopi Arabika Spesial",
+      "amount": 35000,
+      "categoryId": "cat-makanan",
+      "date": "2026-11-03",
+      "paymentMethod": "E-Wallet (GoPay, OVO, Dana, ShopeePay)",
+      "notes": "Kopi sore di kedai kopi",
+      "id": "tx-1793667786580-l9xr8",
+      "createdAt": "2026-11-03T01:03:06.580Z",
+      "updatedAt": "2026-11-03T01:03:06.580Z"
+    },
+    {
+      "id": "tx-101",
+      "title": "Makan Siang Nasi Padang",
+      "amount": 32000,
+      "categoryId": "cat-makanan",
+      "date": "2026-11-01",
+      "paymentMethod": "Tunai",
+      "notes": "Lauk ayam bakar dan es teh manis",
+      "createdAt": "2026-11-03T01:02:49.179Z",
+      "updatedAt": "2026-11-03T01:02:49.179Z"
+    },
+    {
+      "id": "tx-102",
+      "title": "Bensin Motor Beat",
+      "amount": 45000,
+      "categoryId": "cat-transportasi",
+      "date": "2026-11-01",
+      "paymentMethod": "E-Wallet (GoPay, OVO, Dana, ShopeePay)",
+      "notes": "Pertalite full tank di SPBU",
+      "createdAt": "2026-11-03T01:02:49.179Z",
+      "updatedAt": "2026-11-03T01:02:49.179Z"
+    },
+    {
+      "id": "tx-103",
+      "title": "Paket Internet Bulanan",
+      "amount": 125000,
+      "categoryId": "cat-tagihan",
+      "date": "2026-11-02",
+      "paymentMethod": "Transfer Bank",
+      "notes": "Paket kuota belajar dan streaming 50GB",
+      "createdAt": "2026-11-03T01:02:49.179Z",
+      "updatedAt": "2026-11-03T01:02:49.179Z"
+    },
+    {
+      "id": "tx-104",
+      "title": "Buku Modul Praktikum",
+      "amount": 85000,
+      "categoryId": "cat-kuliah",
+      "date": "2026-11-02",
+      "paymentMethod": "Transfer Bank",
+      "notes": "Fotokopi modul lab komputer semester ini",
+      "createdAt": "2026-11-03T01:02:49.179Z",
+      "updatedAt": "2026-11-03T01:02:49.179Z"
+    },
+    {
+      "id": "tx-105",
+      "title": "Kopi Susu & Toast Nongkrong",
+      "amount": 48000,
+      "categoryId": "cat-hiburan",
+      "date": "2026-11-03",
+      "paymentMethod": "E-Wallet (GoPay, OVO, Dana, ShopeePay)",
+      "notes": "Kerja kelompok di cafe bersama teman",
+      "createdAt": "2026-11-03T01:02:49.179Z",
+      "updatedAt": "2026-11-03T01:02:49.179Z"
+    },
+    {
+      "id": "tx-106",
+      "title": "Beli Sabun & Perlengkapan Mandi",
+      "amount": 78000,
+      "categoryId": "cat-pribadi",
+      "date": "2026-11-03",
+      "paymentMethod": "Tunai",
+      "notes": "Belanja bulanan di minimarket",
+      "createdAt": "2026-11-03T01:02:49.179Z",
+      "updatedAt": "2026-11-03T01:02:49.179Z"
+    },
+    {
+      "id": "tx-107",
+      "title": "Vitamin C & Obat Flu",
+      "amount": 42000,
+      "categoryId": "cat-kesehatan",
+      "date": "2026-11-04",
+      "paymentMethod": "Tunai",
+      "notes": "Beli di apotek dekat kos",
+      "createdAt": "2026-11-03T01:02:49.179Z",
+      "updatedAt": "2026-11-03T01:02:49.179Z"
+    },
+    {
+      "id": "tx-108",
+      "title": "Makan Malam Ayam Geprek",
+      "amount": 25000,
+      "categoryId": "cat-makanan",
+      "date": "2026-11-04",
+      "paymentMethod": "E-Wallet (GoPay, OVO, Dana, ShopeePay)",
+      "notes": "Level 3 tambah nasi",
+      "createdAt": "2026-11-03T01:02:49.179Z",
+      "updatedAt": "2026-11-03T01:02:49.179Z"
+    },
+    {
+      "id": "tx-109",
+      "title": "Baju Kaos Polos",
+      "amount": 95000,
+      "categoryId": "cat-belanja",
+      "date": "2026-11-05",
+      "paymentMethod": "E-Wallet (GoPay, OVO, Dana, ShopeePay)",
+      "notes": "Promo diskon online shop",
+      "createdAt": "2026-11-03T01:02:49.179Z",
+      "updatedAt": "2026-11-03T01:02:49.179Z"
+    },
+    {
+      "id": "tx-110",
+      "title": "Tiket Bioskop Weekend",
+      "amount": 55000,
+      "categoryId": "cat-hiburan",
+      "date": "2026-11-06",
+      "paymentMethod": "Kartu Debit / Kredit",
+      "notes": "Nonton film terbaru",
+      "createdAt": "2026-11-03T01:02:49.179Z",
+      "updatedAt": "2026-11-03T01:02:49.179Z"
+    },
+    {
+      "id": "tx-111",
+      "title": "Makan Siang Bersama Teman",
+      "amount": 65000,
+      "categoryId": "cat-makanan",
+      "date": "2026-11-07",
+      "paymentMethod": "E-Wallet (GoPay, OVO, Dana, ShopeePay)",
+      "notes": "Mie ayam jamur pangsit",
+      "createdAt": "2026-11-03T01:02:49.179Z",
+      "updatedAt": "2026-11-03T01:02:49.179Z"
+    },
+    {
+      "id": "tx-112",
+      "title": "Isi Saldo E-Toll / Transportasi Umum",
+      "amount": 50000,
+      "categoryId": "cat-transportasi",
+      "date": "2026-11-08",
+      "paymentMethod": "E-Wallet (GoPay, OVO, Dana, ShopeePay)",
+      "notes": "Untuk perjalanan naik busway & KRL",
+      "createdAt": "2026-11-03T01:02:49.179Z",
+      "updatedAt": "2026-11-03T01:02:49.179Z"
+    },
+    {
+      "id": "tx-201",
+      "title": "Makan Sehari-hari Minggu 1",
+      "amount": 320000,
+      "categoryId": "cat-makanan",
+      "date": "2026-10-05",
+      "paymentMethod": "Tunai",
+      "notes": "Akumulasi makan",
+      "createdAt": "2026-11-03T01:02:49.179Z",
+      "updatedAt": "2026-11-03T01:02:49.179Z"
+    },
+    {
+      "id": "tx-202",
+      "title": "Bensin & Servis Motor",
+      "amount": 180000,
+      "categoryId": "cat-transportasi",
+      "date": "2026-10-10",
+      "paymentMethod": "Transfer Bank",
+      "notes": "Ganti oli & servis berkala",
+      "createdAt": "2026-11-03T01:02:49.179Z",
+      "updatedAt": "2026-11-03T01:02:49.179Z"
+    },
+    {
+      "id": "tx-203",
+      "title": "Uang Buku & Alat Tulis",
+      "amount": 145000,
+      "categoryId": "cat-kuliah",
+      "date": "2026-10-12",
+      "paymentMethod": "Tunai",
+      "notes": "Buku catatan & binder",
+      "createdAt": "2026-11-03T01:02:49.179Z",
+      "updatedAt": "2026-11-03T01:02:49.179Z"
+    },
+    {
+      "id": "tx-204",
+      "title": "Listrik & Air Kos",
+      "amount": 250000,
+      "categoryId": "cat-tagihan",
+      "date": "2026-10-15",
+      "paymentMethod": "Transfer Bank",
+      "notes": "Iuran bulanan kos",
+      "createdAt": "2026-11-03T01:02:49.179Z",
+      "updatedAt": "2026-11-03T01:02:49.179Z"
+    },
+    {
+      "id": "tx-205",
+      "title": "Makan Sehari-hari Minggu 2 & 3",
+      "amount": 540000,
+      "categoryId": "cat-makanan",
+      "date": "2026-10-20",
+      "paymentMethod": "E-Wallet (GoPay, OVO, Dana, ShopeePay)",
+      "notes": "Makan siang & malam",
+      "createdAt": "2026-11-03T01:02:49.179Z",
+      "updatedAt": "2026-11-03T01:02:49.179Z"
+    }
+  ],
+  "monthlyBudgets": {
+    "2026-11": 3500000
+  }
+}

@@ -1,0 +1,44 @@
+// Prisma schema for DompetKu - Personal Expense Tracker
+// Fully ready for Vercel deployment with PostgreSQL (Neon / Supabase)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id           String        @id @default(uuid())
+  name         String        @unique
+  icon         String        @default("Tag")
+  color        String        @default("#3B82F6")
+  isDefault    Boolean       @default(false)
+  budgetLimit  Float         @default(0)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  transactions Transaction[]
+}
+
+model Transaction {
+  id            String   @id @default(uuid())
+  title         String
+  amount        Float
+  categoryId    String
+  category      Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  date          DateTime
+  paymentMethod String   @default("Tunai")
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model MonthlyBudget {
+  id        String   @id @default(uuid())
+  monthYear String   @unique // format "YYYY-MM", e.g. "2026-11"
+  amount    Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
