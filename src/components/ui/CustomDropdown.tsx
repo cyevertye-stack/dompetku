@@ -149,16 +149,9 @@ export function CustomDropdown<T extends string | number = string>({
           ) : null}
 
           {/* Selected Label */}
-          <span className="truncate">
+          <span className="truncate flex-1">
             {selectedOption ? selectedOption.label : placeholder}
           </span>
-
-          {/* Optional Badge */}
-          {selectedOption?.badge && (
-            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 shrink-0">
-              {selectedOption.badge}
-            </span>
-          )}
         </div>
 
         {/* Animated Chevron */}

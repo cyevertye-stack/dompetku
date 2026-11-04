@@ -892,13 +892,13 @@ export default function DompetKuApp() {
                 )}
 
                 {/* Greeting & Date */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
                   <div>
                     <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
                       Ringkasan Pengeluaran Keuangan
                     </h2>
                     <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-                      {currentUser ? `Halo, ${currentUser.name}!` : ''} Analisis {rangeDetails.periodName} • {rangeDetails.label}
+                      {currentUser ? `Halo, ${currentUser.name}!` : ''} Pantau arus kas & pengeluaran Anda.
                     </p>
                   </div>
                   <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 self-start sm:self-auto shadow-2xs">

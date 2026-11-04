@@ -326,8 +326,8 @@ export function TransactionFilter({
         </div>
 
         {/* Sort & Toggle Filter Buttons */}
-        <div className="flex items-center gap-2 shrink-0">
-          <div className="w-full sm:w-52">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="flex-1 sm:w-56">
             <CustomDropdown
               value={filter.sortBy || 'date-desc'}
               onChange={(val) =>
