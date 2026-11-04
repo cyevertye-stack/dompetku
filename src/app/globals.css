@@ -209,3 +209,119 @@ body {
 .pink ::-webkit-scrollbar-thumb:hover {
   background: #f472b6;
 }
+
+/* ==========================================================================
+   ANIMASI SMOOTH & CLEAN (CLICK & TRANSISI PERPINDAHAN)
+   ========================================================================== */
+
+/* 1. Keyframe Definitions */
+@keyframes smoothFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes smoothSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes smoothSwitch {
+  0% {
+    opacity: 0;
+    transform: translateY(4px) scale(0.975);
+    filter: blur(1px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes smoothTabIn {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes smoothPop {
+  0% {
+    transform: scale(0.92);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* 2. Utility Animation Classes */
+.animate-in {
+  animation-duration: 260ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  animation-fill-mode: both;
+}
+
+.fade-in {
+  animation-name: smoothFadeIn;
+}
+
+.animate-fade-slide {
+  animation: smoothSlideUp 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-smooth-switch {
+  animation: smoothSwitch 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-tab-switch {
+  animation: smoothTabIn 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-pop {
+  animation: smoothPop 220ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* 3. Global Click & Tactile Micro-Interactions */
+button,
+[role="button"],
+.cursor-pointer {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Tombol dan Elemen Interaktif Halus saat Ditekan/Diklik */
+button:not(:disabled):active,
+.btn-press:active,
+.active-press:active {
+  transform: scale(0.96);
+  transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Kartu Interaktif dengan Efek Hover & Active Halus */
+.card-interactive {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease;
+}
+
+.card-interactive:hover {
+  transform: translateY(-2px);
+}
+
+.card-interactive:active {
+  transform: translateY(0) scale(0.99);
+}

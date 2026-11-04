@@ -747,7 +747,7 @@ export default function DompetKuApp() {
           <div className="max-w-7xl mx-auto space-y-6">
             {/* VIEW 1: DASHBOARD */}
             {activeTab === 'dashboard' && (
-              <div className="space-y-6 animate-in fade-in duration-300">
+              <div key="view-dashboard" className="space-y-6 animate-fade-slide">
                 {/* Greeting & Date */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
@@ -811,7 +811,7 @@ export default function DompetKuApp() {
 
             {/* VIEW 2: TRANSAKSI */}
             {activeTab === 'transactions' && (
-              <div className="space-y-6 animate-in fade-in duration-300">
+              <div key="view-transactions" className="space-y-6 animate-fade-slide">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
                     <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
@@ -826,7 +826,7 @@ export default function DompetKuApp() {
                       setEditingTransaction(null);
                       setIsAddTxModalOpen(true);
                     }}
-                    className="flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-blue-200 dark:shadow-none transition-all cursor-pointer self-start sm:self-auto"
+                    className="flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-blue-200 dark:shadow-none transition-all cursor-pointer self-start sm:self-auto"
                   >
                     <span>+ Catat Transaksi</span>
                   </button>
@@ -868,7 +868,7 @@ export default function DompetKuApp() {
 
             {/* VIEW 3: ANGGARAN & BATAS */}
             {activeTab === 'budgets' && (
-              <div className="space-y-6 animate-in fade-in duration-300">
+              <div key="view-budgets" className="space-y-6 animate-fade-slide">
                 <BudgetOverview
                   monthlyBudget={metrics.monthlyBudget}
                   transactions={transactions}
@@ -889,7 +889,7 @@ export default function DompetKuApp() {
 
             {/* VIEW 4: KATEGORI */}
             {activeTab === 'categories' && (
-              <div className="space-y-6 animate-in fade-in duration-300">
+              <div key="view-categories" className="space-y-6 animate-fade-slide">
                 <CategoryList
                   categories={categories}
                   transactions={transactions}
@@ -909,23 +909,25 @@ export default function DompetKuApp() {
 
             {/* VIEW: TABUNGAN & IMPIAN */}
             {activeTab === 'savings' && (
-              <SavingsView
-                goals={savingsGoals}
-                transactions={savingsTransactions}
-                totalSavings={totalSavings}
-                savingsThisMonth={savingsThisMonth}
-                goldSavings={goldSavings}
-                goldTransactions={goldTransactions}
-                totalGoldGrams={totalGoldGrams}
-                totalGoldEstimatedValue={totalGoldEstimatedValue}
-                userId={currentUser?.id}
-                onRefresh={() => loadData(currentUser?.id)}
-              />
+              <div key="view-savings" className="animate-fade-slide">
+                <SavingsView
+                  goals={savingsGoals}
+                  transactions={savingsTransactions}
+                  totalSavings={totalSavings}
+                  savingsThisMonth={savingsThisMonth}
+                  goldSavings={goldSavings}
+                  goldTransactions={goldTransactions}
+                  totalGoldGrams={totalGoldGrams}
+                  totalGoldEstimatedValue={totalGoldEstimatedValue}
+                  userId={currentUser?.id}
+                  onRefresh={() => loadData(currentUser?.id)}
+                />
+              </div>
             )}
 
             {/* VIEW 5: LAPORAN & EKSPOR EXCEL */}
             {activeTab === 'reports' && (
-              <div className="space-y-6 animate-in fade-in duration-300">
+              <div key="view-reports" className="space-y-6 animate-fade-slide">
                 <div>
                   <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
                     Laporan Keuangan & Ekspor Microsoft Excel
@@ -948,17 +950,19 @@ export default function DompetKuApp() {
 
             {/* VIEW 6: PROFIL & PENGATURAN */}
             {activeTab === 'settings' && (
-              <ProfileSettingsView
-                currentUser={currentUser}
-                onUpdateUser={(updatedUser) => setCurrentUser(updatedUser)}
-                onLogout={handleLogout}
-                transactionCount={transactions.length}
-                totalSavingsValue={totalSavings + totalGoldEstimatedValue}
-                categoryCount={categories.length}
-                onRefreshData={() => loadData(currentUser?.id)}
-                theme={theme}
-                onSelectTheme={applyTheme}
-              />
+              <div key="view-settings" className="space-y-6 animate-fade-slide">
+                <ProfileSettingsView
+                  currentUser={currentUser}
+                  onUpdateUser={(updatedUser) => setCurrentUser(updatedUser)}
+                  onLogout={handleLogout}
+                  transactionCount={transactions.length}
+                  totalSavingsValue={totalSavings + totalGoldEstimatedValue}
+                  categoryCount={categories.length}
+                  onRefreshData={() => loadData(currentUser?.id)}
+                  theme={theme}
+                  onSelectTheme={applyTheme}
+                />
+              </div>
             )}
           </div>
         </main>

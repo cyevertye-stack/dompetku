@@ -199,13 +199,13 @@ export function SavingsView({
         <button
           type="button"
           onClick={() => handleSubTabChange('money')}
-          className={`flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 ${
+          className={`flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer active:scale-95 ${
             subTab === 'money'
-              ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-sm'
-              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-sm scale-100'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:scale-[1.01]'
           }`}
         >
-          <PiggyBank className="w-4 h-4" />
+          <PiggyBank className="w-4 h-4 transition-transform duration-200 group-hover:scale-110" />
           <span>Tabungan Uang</span>
           {totalSavings > 0 && (
             <span className="hidden sm:inline-block text-[11px] font-semibold opacity-80">
@@ -217,16 +217,16 @@ export function SavingsView({
         <button
           type="button"
           onClick={() => handleSubTabChange('gold')}
-          className={`flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 ${
+          className={`flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer active:scale-95 ${
             subTab === 'gold'
-              ? 'bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-400 shadow-sm'
-              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              ? 'bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-400 shadow-sm scale-100'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:scale-[1.01]'
           }`}
         >
-          <Award className="w-4 h-4 text-amber-500" />
+          <Award className="w-4 h-4 text-amber-500 transition-transform duration-200 group-hover:scale-110" />
           <span>Tabungan Emas</span>
           {totalGoldGrams > 0 && (
-            <span className="text-[10px] bg-amber-500/15 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-full font-bold">
+            <span className="text-[10px] bg-amber-500/15 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-full font-bold animate-pop">
               {totalGoldGrams} gr
             </span>
           )}
@@ -237,7 +237,7 @@ export function SavingsView({
       {/* SUB-VIEW 1: TABUNGAN UANG & TARGET IMPIAN                                 */}
       {/* ========================================================================= */}
       {subTab === 'money' && (
-        <div className="space-y-6">
+        <div key="subtab-money" className="space-y-6 animate-fade-slide">
           {/* Hero Balance Card */}
           <div className="bg-gradient-to-br from-emerald-600 via-teal-700 to-slate-900 text-white rounded-3xl p-5 sm:p-6 shadow-xl shadow-emerald-700/20 relative overflow-hidden">
             <div className="absolute right-0 top-0 -mr-6 -mt-6 w-36 h-36 bg-white/10 rounded-full blur-2xl pointer-events-none" />
@@ -646,7 +646,7 @@ export function SavingsView({
       {/* SUB-VIEW 2: TABUNGAN EMAS & LOGAM MULIA                                    */}
       {/* ========================================================================= */}
       {subTab === 'gold' && (
-        <div className="space-y-6">
+        <div key="subtab-gold" className="space-y-6 animate-fade-slide">
           {/* Hero Gold Card */}
           <div className="bg-gradient-to-br from-amber-500 via-amber-600 to-yellow-600 text-white rounded-3xl p-5 sm:p-6 shadow-xl shadow-amber-600/20 relative overflow-hidden">
             <div className="absolute right-0 top-0 -mr-6 -mt-6 w-36 h-36 bg-white/10 rounded-full blur-2xl pointer-events-none" />

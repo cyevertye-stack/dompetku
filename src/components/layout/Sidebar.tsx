@@ -147,10 +147,10 @@ export function Sidebar({
             <button
               key={item.key}
               onClick={() => onTabChange(item.key)}
-              className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer active:scale-95 ${
                 isActive
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-900/50'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-900/50 scale-[1.02]'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60 hover:translate-x-1'
               }`}
             >
               <div className="flex items-center gap-3">
