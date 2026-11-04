@@ -138,9 +138,11 @@ export interface TransactionFilter {
   sortBy?: 'date-desc' | 'date-asc' | 'amount-desc' | 'amount-asc';
 }
 
+export type DashboardRange = '1m' | '3m' | '6m' | '1y' | 'all';
+
 export interface DashboardMetrics {
-  totalThisMonth: number; // Pengeluaran bulan ini
-  incomeThisMonth: number; // Pemasukan bulan ini
+  totalThisMonth: number; // Pengeluaran bulan/periode ini
+  incomeThisMonth: number; // Pemasukan bulan/periode ini
   netCashflow: number; // Pemasukan - Pengeluaran
   totalToday: number;
   totalThisWeek: number;
@@ -154,6 +156,9 @@ export interface DashboardMetrics {
   previousMonthTotal: number;
   comparisonPercent: number;
   comparisonAmount: number;
+  range?: DashboardRange;
+  rangeLabel?: string;
+  rangePeriodName?: string;
   totalSavings?: number;
   savingsThisMonth?: number;
   totalGoldGrams?: number;

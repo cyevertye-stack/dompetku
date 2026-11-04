@@ -15,11 +15,13 @@ import {
   Filler,
 } from 'chart.js';
 import { Line, Doughnut, Bar } from 'react-chartjs-2';
-import { Category, ThemeMode, Transaction } from '@/lib/types';
+import { Category, DashboardRange, ThemeMode, Transaction } from '@/lib/types';
 import {
   BULAN_INDONESIA,
   BULAN_PENDEK,
+  formatMonthIndonesian,
   formatRupiah,
+  RangeDetails,
 } from '@/lib/formatters';
 
 // Register Chart.js components
@@ -40,6 +42,8 @@ interface ExpenseChartsProps {
   transactions: Transaction[];
   categories: Category[];
   currentMonth: string;
+  dashboardRange?: DashboardRange;
+  rangeDetails?: RangeDetails;
   darkMode?: boolean;
   theme?: ThemeMode;
 }
@@ -48,67 +52,131 @@ export function ExpenseCharts({
   transactions,
   categories,
   currentMonth,
+  dashboardRange = '1m',
+  rangeDetails,
   darkMode = false,
   theme = 'light',
 }: ExpenseChartsProps) {
   const isPink = theme === 'pink';
 
-  // 1. Daily Expenses (Current Month)
-  const dailyData = useMemo(() => {
-    const currentMonthTxs = transactions.filter(
-      (t) => t.date.startsWith(currentMonth) && t.type !== 'income'
-    );
-    const [y, m] = currentMonth.split('-').map(Number);
-    const daysInMonth = y && m ? new Date(y, m, 0).getDate() : 30;
+  // Transaksi pengeluaran yang sesuai rentang yang dipilih
+  const rangeExpenseTxs = useMemo(() => {
+    if (dashboardRange === '1m') {
+      return transactions.filter(
+        (t) => t.date.startsWith(currentMonth) && t.type !== 'income'
+      );
+    }
+    if (dashboardRange === 'all') {
+      return transactions.filter((t) => t.type !== 'income');
+    }
+    return transactions.filter((t) => {
+      if (t.type === 'income' || !t.date) return false;
+      if (rangeDetails?.startDate && t.date < rangeDetails.startDate) return false;
+      if (rangeDetails?.endDate && t.date > rangeDetails.endDate) return false;
+      return true;
+    });
+  }, [transactions, currentMonth, dashboardRange, rangeDetails]);
 
-    const daysMap: Record<number, number> = {};
-    for (let i = 1; i <= daysInMonth; i++) {
-      daysMap[i] = 0;
+  // 1. Trend Chart: Harian jika 1 Bulan, Bulanan jika 3 Bulan / 6 Bulan / 1 Tahun / Semua
+  const trendData = useMemo(() => {
+    const strokeColor = isPink ? '#e11d48' : darkMode ? '#60a5fa' : '#2563EB';
+    const fillColor = isPink
+      ? 'rgba(225, 29, 72, 0.12)'
+      : darkMode
+      ? 'rgba(96, 165, 250, 0.12)'
+      : 'rgba(37, 99, 235, 0.12)';
+
+    // Mode 1 Bulan: Tampilkan pengeluaran harian per tanggal 1..31
+    if (dashboardRange === '1m') {
+      const [y, m] = currentMonth.split('-').map(Number);
+      const daysInMonth = y && m ? new Date(y, m, 0).getDate() : 30;
+
+      const daysMap: Record<number, number> = {};
+      for (let i = 1; i <= daysInMonth; i++) {
+        daysMap[i] = 0;
+      }
+
+      rangeExpenseTxs.forEach((t) => {
+        const day = parseInt(t.date.split('-')[2], 10);
+        if (daysMap[day] !== undefined) {
+          daysMap[day] += t.amount;
+        }
+      });
+
+      const labels = Object.keys(daysMap).map((d) => `Tgl ${d}`);
+      const data = Object.values(daysMap);
+
+      return {
+        labels,
+        datasets: [
+          {
+            label: 'Pengeluaran Harian (Rp)',
+            data,
+            fill: true,
+            borderColor: strokeColor,
+            backgroundColor: fillColor,
+            tension: 0.35,
+            pointRadius: 3,
+            pointHoverRadius: 6,
+            pointBackgroundColor: strokeColor,
+          },
+        ],
+        isMultiMonth: false,
+      };
     }
 
-    currentMonthTxs.forEach((t) => {
-      const day = parseInt(t.date.split('-')[2], 10);
-      if (daysMap[day] !== undefined) {
-        daysMap[day] += t.amount;
-      }
+    // Mode Multi-Bulan (3 Bulan, 6 Bulan, 1 Tahun): Tampilkan tren pengeluaran per bulan
+    const months = rangeDetails?.monthsList && rangeDetails.monthsList.length > 0
+      ? rangeDetails.monthsList
+      : [currentMonth];
+
+    const monthTotals = months.map((m) => {
+      return transactions
+        .filter((t) => t.date.startsWith(m) && t.type !== 'income')
+        .reduce((sum, t) => sum + t.amount, 0);
     });
 
-    const labels = Object.keys(daysMap).map((d) => `Tgl ${d}`);
-    const data = Object.values(daysMap);
-
-    const strokeColor = isPink ? '#e11d48' : darkMode ? '#60a5fa' : '#2563EB';
-    const fillColor = isPink ? 'rgba(225, 29, 72, 0.12)' : darkMode ? 'rgba(96, 165, 250, 0.12)' : 'rgba(37, 99, 235, 0.12)';
+    const labels = months.map((m) => {
+      const [y, mon] = m.split('-').map(Number);
+      return `${BULAN_PENDEK[mon - 1]} ${y}`;
+    });
 
     return {
       labels,
       datasets: [
         {
-          label: 'Pengeluaran Harian (Rp)',
-          data,
+          label: 'Total Pengeluaran per Bulan (Rp)',
+          data: monthTotals,
           fill: true,
           borderColor: strokeColor,
           backgroundColor: fillColor,
           tension: 0.35,
-          pointRadius: 3,
-          pointHoverRadius: 6,
+          pointRadius: 4,
+          pointHoverRadius: 7,
           pointBackgroundColor: strokeColor,
         },
       ],
+      isMultiMonth: true,
     };
-  }, [transactions, currentMonth, isPink, darkMode]);
+  }, [
+    transactions,
+    rangeExpenseTxs,
+    currentMonth,
+    dashboardRange,
+    rangeDetails,
+    isPink,
+    darkMode,
+  ]);
 
-  // 2. Category Breakdown (Doughnut)
+  // 2. Category Breakdown (Doughnut) disesuaikan dengan rentang yang dipilih
   const categoryData = useMemo(() => {
-    const currentMonthTxs = transactions.filter(
-      (t) => t.date.startsWith(currentMonth) && t.type !== 'income'
-    );
     const catMap: Record<string, { name: string; amount: number; color: string }> = {};
 
     categories.forEach((c) => {
       catMap[c.id] = { name: c.name, amount: 0, color: c.color };
     });
 
-    currentMonthTxs.forEach((t) => {
+    rangeExpenseTxs.forEach((t) => {
       if (catMap[t.categoryId]) {
         catMap[t.categoryId].amount += t.amount;
       } else {
@@ -136,30 +204,43 @@ export function ExpenseCharts({
       ],
       hasData: activeCats.length > 0,
     };
-  }, [transactions, categories, currentMonth]);
+  }, [rangeExpenseTxs, categories]);
 
-  // 3. Monthly Comparison (Last 6 Months relative to currentMonth)
+  // 3. Monthly Comparison (Bar Chart)
   const monthlyComparisonData = useMemo(() => {
-    const [currY, currM] = currentMonth.split('-').map(Number);
-    const months: { key: string; label: string }[] = [];
+    let months: { key: string; label: string }[] = [];
 
-    for (let i = 5; i >= 0; i--) {
-      let m = (currM || 11) - i;
-      let y = currY || 2026;
-      while (m < 1) {
-        m += 12;
-        y -= 1;
+    if (rangeDetails?.monthsList && rangeDetails.monthsList.length > 0) {
+      months = rangeDetails.monthsList.map((m) => {
+        const [y, mon] = m.split('-').map(Number);
+        return {
+          key: m,
+          label: `${BULAN_PENDEK[mon - 1]} ${y}`,
+        };
+      });
+    } else {
+      const [currY, currM] = currentMonth.split('-').map(Number);
+      for (let i = 5; i >= 0; i--) {
+        let m = (currM || 11) - i;
+        let y = currY || 2026;
+        while (m < 1) {
+          m += 12;
+          y -= 1;
+        }
+        const key = `${y}-${String(m).padStart(2, '0')}`;
+        const label = `${BULAN_PENDEK[m - 1]} ${y}`;
+        months.push({ key, label });
       }
-      const key = `${y}-${String(m).padStart(2, '0')}`;
-      const label = `${BULAN_PENDEK[m - 1]} ${y}`;
-      months.push({ key, label });
     }
 
     const monthTotals = months.map((m) => {
       return transactions
-        .filter((t) => t.date.startsWith(m.key))
+        .filter((t) => t.date.startsWith(m.key) && t.type !== 'income')
         .reduce((sum, t) => sum + t.amount, 0);
     });
+
+    const primaryBarColor = isPink ? '#e11d48' : '#2563EB';
+    const secondaryBarColor = isPink ? '#fda4af' : '#93C5FD';
 
     return {
       labels: months.map((m) => m.label),
@@ -168,23 +249,20 @@ export function ExpenseCharts({
           label: 'Total Pengeluaran (Rp)',
           data: monthTotals,
           backgroundColor: months.map((m, idx) =>
-            idx === months.length - 1 ? '#2563EB' : '#93C5FD'
+            idx === months.length - 1 ? primaryBarColor : secondaryBarColor
           ),
           borderRadius: 8,
           barPercentage: 0.6,
         },
       ],
     };
-  }, [transactions, currentMonth]);
+  }, [transactions, currentMonth, rangeDetails, isPink]);
 
   // 4. Payment Method Distribution
   const paymentMethodData = useMemo(() => {
-    const currentMonthTxs = transactions.filter(
-      (t) => t.date.startsWith(currentMonth) && t.type !== 'income'
-    );
     const methodMap: Record<string, number> = {};
 
-    currentMonthTxs.forEach((t) => {
+    rangeExpenseTxs.forEach((t) => {
       methodMap[t.paymentMethod] = (methodMap[t.paymentMethod] || 0) + t.amount;
     });
 
@@ -204,7 +282,7 @@ export function ExpenseCharts({
       ],
       hasData: labels.length > 0,
     };
-  }, [transactions, currentMonth]);
+  }, [rangeExpenseTxs]);
 
   const tickColor = isPink ? '#8c6878' : darkMode ? '#94a3b8' : '#64748b';
   const gridColor = isPink ? 'rgba(225, 29, 72, 0.08)' : darkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)';
@@ -221,13 +299,21 @@ export function ExpenseCharts({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Chart 1: Daily Trend */}
+      {/* Chart 1: Trend Chart (Daily or Multi-Month) */}
       <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col justify-between transition-colors">
         <div>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-sm font-bold text-slate-800 dark:text-white">Tren Pengeluaran Harian</h3>
-              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Bulan berjalan</p>
+              <h3 className="text-sm font-bold text-slate-800 dark:text-white">
+                {trendData.isMultiMonth
+                  ? `Tren Pengeluaran (${rangeDetails?.periodName || 'Multi-Bulan'})`
+                  : `Tren Pengeluaran Harian`}
+              </h3>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 truncate max-w-[260px] sm:max-w-none">
+                {trendData.isMultiMonth
+                  ? (rangeDetails?.label || 'Pengeluaran bulanan')
+                  : `Harian bulan ${formatMonthIndonesian(currentMonth)}`}
+              </p>
             </div>
             <span className="text-xs font-semibold px-2.5 py-1 bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 rounded-lg">
               Area Chart
@@ -235,7 +321,7 @@ export function ExpenseCharts({
           </div>
           <div className="h-64 sm:h-72 w-full">
             <Line
-              data={dailyData}
+              data={trendData}
               options={{
                 responsive: true,
                 maintainAspectRatio: false,
@@ -246,7 +332,7 @@ export function ExpenseCharts({
                 scales: {
                   x: {
                     grid: { display: false },
-                    ticks: { maxTicksLimit: 10, font: { size: 10 }, color: tickColor },
+                    ticks: { maxTicksLimit: 12, font: { size: 10 }, color: tickColor },
                   },
                   y: {
                     beginAtZero: true,
@@ -269,8 +355,12 @@ export function ExpenseCharts({
         <div>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-sm font-bold text-slate-800 dark:text-white">Proporsi Berdasarkan Kategori</h3>
-              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Bulan berjalan</p>
+              <h3 className="text-sm font-bold text-slate-800 dark:text-white">
+                Proporsi Berdasarkan Kategori
+              </h3>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 truncate max-w-[260px] sm:max-w-none">
+                {rangeDetails?.label || `Bulan ${formatMonthIndonesian(currentMonth)}`}
+              </p>
             </div>
             <span className="text-xs font-semibold px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 rounded-lg">
               Donut Chart
@@ -295,7 +385,7 @@ export function ExpenseCharts({
               />
             ) : (
               <div className="text-center text-slate-400 dark:text-slate-500 text-xs py-12">
-                Belum ada transaksi di bulan ini
+                Belum ada transaksi pengeluaran pada rentang ini
               </div>
             )}
           </div>
@@ -308,7 +398,9 @@ export function ExpenseCharts({
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-sm font-bold text-slate-800 dark:text-white">Perbandingan Pengeluaran Antar Bulan</h3>
-              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">6 Bulan Terakhir</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                {rangeDetails?.periodName || '6 Bulan Terakhir'}
+              </p>
             </div>
             <span className="text-xs font-semibold px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 rounded-lg">
               Bar Chart
@@ -351,7 +443,9 @@ export function ExpenseCharts({
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-sm font-bold text-slate-800 dark:text-white">Distribusi Metode Pembayaran</h3>
-              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Bulan berjalan</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 truncate max-w-[260px] sm:max-w-none">
+                {rangeDetails?.label || `Bulan ${formatMonthIndonesian(currentMonth)}`}
+              </p>
             </div>
             <span className="text-xs font-semibold px-2.5 py-1 bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 rounded-lg">
               Horizontal Bar
@@ -388,7 +482,7 @@ export function ExpenseCharts({
               />
             ) : (
               <div className="text-center text-slate-400 dark:text-slate-500 text-xs py-12">
-                Belum ada transaksi di bulan ini
+                Belum ada transaksi di rentang ini
               </div>
             )}
           </div>

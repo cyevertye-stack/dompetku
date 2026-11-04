@@ -105,8 +105,15 @@ export function Header({
           </div>
         </div>
 
-        {/* Month & Year Navigator (Desktop & Mobile) */}
-        <div className="flex items-center gap-1.5">
+        {/* Compact Month Badge on Mobile (< sm) */}
+        <div className="sm:hidden flex items-center">
+          <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-xl border border-slate-200/80 dark:border-slate-700 shadow-2xs">
+            {formatMonthIndonesian(currentMonth)}
+          </span>
+        </div>
+
+        {/* Month & Year Navigator (Tablet & Desktop: sm:flex) */}
+        <div className="hidden sm:flex items-center gap-1.5">
           <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 sm:p-1 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-2xs">
             {/* Tombol Bulan Sebelumnya */}
             <button

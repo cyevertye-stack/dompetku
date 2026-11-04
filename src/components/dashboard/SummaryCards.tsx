@@ -17,7 +17,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { formatRupiah, formatMonthIndonesian, getCurrentMonthString } from '@/lib/formatters';
-import { DashboardMetrics } from '@/lib/types';
+import { DashboardMetrics, DashboardRange } from '@/lib/types';
 
 export type SavingsCardMode = 'total' | 'money' | 'gold';
 
@@ -26,6 +26,8 @@ interface SummaryCardsProps {
   onOpenBudgetModal: () => void;
   onOpenSavings?: (targetSubTab?: 'money' | 'gold') => void;
   currentMonth?: string;
+  dashboardRange?: DashboardRange;
+  rangePeriodName?: string;
 }
 
 export function SummaryCards({
@@ -33,11 +35,29 @@ export function SummaryCards({
   onOpenBudgetModal,
   onOpenSavings,
   currentMonth,
+  dashboardRange = '1m',
+  rangePeriodName,
 }: SummaryCardsProps) {
   const [savingsMode, setSavingsMode] = useState<SavingsCardMode>('total');
   const todayMonth = React.useMemo(() => getCurrentMonthString(), []);
   const isCustomMonth = Boolean(currentMonth && currentMonth !== todayMonth);
   const monthName = currentMonth ? formatMonthIndonesian(currentMonth) : '';
+
+  const displayPeriodLabel = React.useMemo(() => {
+    if (dashboardRange === '3m') return '3 Bulan';
+    if (dashboardRange === '6m') return '6 Bulan';
+    if (dashboardRange === '1y') return '1 Tahun';
+    if (dashboardRange === 'all') return 'Semua Waktu';
+    return isCustomMonth ? monthName : 'Bulan Ini';
+  }, [dashboardRange, isCustomMonth, monthName]);
+
+  const comparisonLabel = React.useMemo(() => {
+    if (dashboardRange === '3m') return 'vs 3 bln lalu';
+    if (dashboardRange === '6m') return 'vs 6 bln lalu';
+    if (dashboardRange === '1y') return 'vs 1 thn lalu';
+    if (dashboardRange === 'all') return 'semua waktu';
+    return 'vs bulan sebelumnya';
+  }, [dashboardRange]);
 
   // Load saved savings card mode from localStorage
   useEffect(() => {
@@ -81,7 +101,7 @@ export function SummaryCards({
         {/* Master Cashflow Hero Card */}
         <div className="bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white rounded-3xl p-5 shadow-xl border border-slate-800">
           <div className="flex items-center justify-between text-xs text-slate-300 font-semibold mb-1">
-            <span>{isCustomMonth ? `Sisa Saldo Kas (${monthName})` : 'Sisa Saldo Kas Bulan Ini'}</span>
+            <span>Sisa Saldo Kas ({displayPeriodLabel})</span>
             <span
               className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                 isCashflowPositive
@@ -105,7 +125,7 @@ export function SummaryCards({
           <div className="grid grid-cols-2 gap-3 pt-3 mt-3 border-t border-slate-800/80 text-xs">
             <div className="bg-slate-800/50 p-2.5 rounded-xl border border-slate-700/40">
               <span className="text-[10px] uppercase font-bold text-emerald-400 block mb-0.5">
-                🟢 {isCustomMonth ? `Pemasukan (${monthName})` : 'Pemasukan'}
+                🟢 Pemasukan ({displayPeriodLabel})
               </span>
               <span className="font-extrabold text-sm text-white">
                 +{formatRupiah(metrics.incomeThisMonth || 0)}
@@ -113,7 +133,7 @@ export function SummaryCards({
             </div>
             <div className="bg-slate-800/50 p-2.5 rounded-xl border border-slate-700/40">
               <span className="text-[10px] uppercase font-bold text-rose-400 block mb-0.5">
-                🔴 {isCustomMonth ? `Pengeluaran (${monthName})` : 'Pengeluaran'}
+                🔴 Pengeluaran ({displayPeriodLabel})
               </span>
               <span className="font-extrabold text-sm text-white">
                 -{formatRupiah(metrics.totalThisMonth || 0)}
@@ -245,12 +265,12 @@ export function SummaryCards({
 
       {/* 2. VERSI DESKTOP (5 KOLOM LENGKAP & MEWAH) */}
       <div className="hidden sm:grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-        {/* 1. Pemasukan Bulan Ini */}
+        {/* 1. Pemasukan Periode Ini */}
         <div className="relative bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md card-interactive flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
-                {isCustomMonth ? `Pemasukan (${monthName})` : 'Pemasukan Bulan Ini'}
+                Pemasukan ({displayPeriodLabel})
               </span>
               <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 rounded-xl transition-transform duration-200 hover:scale-110">
                 <TrendingUp className="w-5 h-5" />
@@ -268,12 +288,12 @@ export function SummaryCards({
           </div>
         </div>
 
-        {/* 2. Pengeluaran Bulan Ini */}
+        {/* 2. Pengeluaran Periode Ini */}
         <div className="relative bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md card-interactive flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
-                {isCustomMonth ? `Pengeluaran (${monthName})` : 'Pengeluaran Bulan Ini'}
+                Pengeluaran ({displayPeriodLabel})
               </span>
               <div className="p-2.5 bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 rounded-xl transition-transform duration-200 hover:scale-110">
                 <TrendingDown className="w-5 h-5" />
@@ -302,7 +322,7 @@ export function SummaryCards({
             ) : (
               <span className="text-slate-400 font-medium">Sama</span>
             )}
-            <span className="text-slate-400 dark:text-slate-500">vs bulan sebelumnya</span>
+            <span className="text-slate-400 dark:text-slate-500">{comparisonLabel}</span>
           </div>
         </div>
 
@@ -311,7 +331,7 @@ export function SummaryCards({
           <div>
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Sisa Saldo Kas
+                Sisa Saldo Kas ({displayPeriodLabel})
               </span>
               <div className="p-2.5 bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 rounded-xl transition-transform duration-200 hover:scale-110">
                 <Wallet className="w-5 h-5" />

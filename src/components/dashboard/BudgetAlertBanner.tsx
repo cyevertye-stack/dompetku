@@ -10,6 +10,7 @@ interface BudgetAlertBannerProps {
   remainingBudget: number;
   budgetUsagePercent: number;
   onOpenBudgetModal: () => void;
+  periodName?: string;
 }
 
 export function BudgetAlertBanner({
@@ -18,7 +19,10 @@ export function BudgetAlertBanner({
   remainingBudget,
   budgetUsagePercent,
   onOpenBudgetModal,
+  periodName,
 }: BudgetAlertBannerProps) {
+  const displayPeriod = periodName || 'Bulan Ini';
+
   if (monthlyBudget <= 0) {
     return (
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-slate-900/60 border border-blue-200/80 dark:border-blue-900/50 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors">
@@ -28,16 +32,16 @@ export function BudgetAlertBanner({
           </div>
           <div>
             <h4 className="text-sm font-bold text-slate-800 dark:text-white">
-              Batas Anggaran Bulanan Belum Ditentukan
+              Batas Anggaran ({displayPeriod}) Belum Ditentukan
             </h4>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Tentukan batas anggaran bulan ini untuk mengontrol pengeluaran dan mencegah overbudget.
+              Tentukan batas anggaran untuk mengontrol pengeluaran dan mencegah overbudget.
             </p>
           </div>
         </div>
         <button
           onClick={onOpenBudgetModal}
-          className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer shrink-0"
+          className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer shrink-0 active:scale-95"
         >
           <span>Atur Anggaran Sekarang</span>
           <ArrowRight className="w-3.5 h-3.5" />
@@ -53,8 +57,8 @@ export function BudgetAlertBanner({
   let bgColor = 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/60 text-emerald-950 dark:text-emerald-200';
   let progressColor = 'bg-emerald-500';
   let icon = <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />;
-  let title = 'Pengeluaran Masih Terkendali Aman';
-  let message = `Anda telah menggunakan ${budgetUsagePercent}% dari batas anggaran bulanan (${formatRupiah(
+  let title = `Pengeluaran (${displayPeriod}) Masih Terkendali Aman`;
+  let message = `Anda telah menggunakan ${budgetUsagePercent}% dari batas anggaran (${formatRupiah(
     totalExpense
   )} dari ${formatRupiah(monthlyBudget)}).`;
 
@@ -62,7 +66,7 @@ export function BudgetAlertBanner({
     bgColor = 'bg-rose-50/90 dark:bg-rose-950/30 border-rose-300 dark:border-rose-800/60 text-rose-950 dark:text-rose-200';
     progressColor = 'bg-rose-600';
     icon = <AlertCircle className="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0" />;
-    title = 'PERINGATAN: Anggaran Bulan Ini Sudah Terlampaui!';
+    title = `PERINGATAN: Anggaran (${displayPeriod}) Sudah Terlampaui!`;
     message = `Pengeluaran Anda telah melebihi batas anggaran sebesar ${formatRupiah(
       Math.abs(remainingBudget)
     )} (${budgetUsagePercent}% terpakai). Harap rem pengeluaran non-esensial!`;
@@ -70,7 +74,7 @@ export function BudgetAlertBanner({
     bgColor = 'bg-amber-50/80 dark:bg-amber-950/30 border-amber-300 dark:border-amber-800/60 text-amber-950 dark:text-amber-200';
     progressColor = 'bg-amber-500';
     icon = <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />;
-    title = 'Perhatian: Pengeluaran Mendekati Batas Anggaran';
+    title = `Perhatian: Pengeluaran (${displayPeriod}) Mendekati Batas Anggaran`;
     message = `Anda sudah memakai ${budgetUsagePercent}% dari total anggaran. Sisa anggaran hanya tinggal ${formatRupiah(
       remainingBudget
     )}.`;

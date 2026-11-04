@@ -1,4 +1,5 @@
 // Indonesian currency and date formatting utilities
+import { DashboardRange } from './types';
 
 export function formatRupiah(amount: number | string, withPrefix = true): string {
   const num = typeof amount === 'string' ? parseFloat(amount) || 0 : amount;
@@ -98,8 +99,114 @@ export function getNextMonthString(monthYear: string): string {
 }
 
 export function getDaysInMonth(monthYear: string): number {
-  const [y, m] = monthYear.split('-').map(Number);
+  if (!monthYear) return 30;
+  const parts = monthYear.split('-');
+  const y = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10);
+  if (isNaN(y) || isNaN(m)) return 30;
   return new Date(y, m, 0).getDate();
+}
+
+export function subtractMonths(monthYear: string, count: number): string {
+  if (!monthYear) return monthYear;
+  const parts = monthYear.split('-');
+  let y = parseInt(parts[0], 10);
+  let m = parseInt(parts[1], 10);
+  if (isNaN(y) || isNaN(m)) return monthYear;
+  m -= count;
+  while (m < 1) {
+    m += 12;
+    y -= 1;
+  }
+  while (m > 12) {
+    m -= 12;
+    y += 1;
+  }
+  return `${y}-${String(m).padStart(2, '0')}`;
+}
+
+export interface RangeDetails {
+  startDate: string;
+  endDate: string;
+  label: string;
+  periodName: string;
+  shortLabel: string;
+  monthsList: string[];
+  prevStartDate: string;
+  prevEndDate: string;
+}
+
+export function getRangeDetails(
+  endMonthYear: string,
+  range: DashboardRange
+): RangeDetails {
+  const endDays = getDaysInMonth(endMonthYear);
+
+  if (range === 'all') {
+    return {
+      startDate: '',
+      endDate: '',
+      label: 'Semua Riwayat Transaksi',
+      periodName: 'Semua Waktu',
+      shortLabel: 'Semua',
+      monthsList: [],
+      prevStartDate: '',
+      prevEndDate: '',
+    };
+  }
+
+  let monthCount = 1;
+  let periodName = `1 Bulan (${formatMonthIndonesian(endMonthYear)})`;
+  let shortLabel = formatMonthIndonesian(endMonthYear);
+
+  if (range === '3m') {
+    monthCount = 3;
+    periodName = '3 Bulan Terakhir';
+    shortLabel = '3 Bulan';
+  } else if (range === '6m') {
+    monthCount = 6;
+    periodName = '6 Bulan Terakhir';
+    shortLabel = '6 Bulan';
+  } else if (range === '1y') {
+    monthCount = 12;
+    periodName = '1 Tahun Terakhir';
+    shortLabel = '1 Tahun';
+  }
+
+  // Generate months list from oldest to newest
+  const monthsList: string[] = [];
+  for (let i = monthCount - 1; i >= 0; i--) {
+    monthsList.push(subtractMonths(endMonthYear, i));
+  }
+
+  const startMonthYear = monthsList[0];
+  const startDate = `${startMonthYear}-01`;
+  const endDate = `${endMonthYear}-${String(endDays).padStart(2, '0')}`;
+
+  const startFormatted = formatDateIndonesian(startDate);
+  const endFormatted = formatDateIndonesian(endDate);
+  const label =
+    monthCount === 1
+      ? formatMonthIndonesian(endMonthYear)
+      : `${startFormatted} – ${endFormatted}`;
+
+  // Previous comparison range (exact equivalent prior window)
+  const prevEndMonthYear = subtractMonths(endMonthYear, monthCount);
+  const prevStartMonthYear = subtractMonths(prevEndMonthYear, monthCount - 1);
+  const prevEndDays = getDaysInMonth(prevEndMonthYear);
+  const prevStartDate = `${prevStartMonthYear}-01`;
+  const prevEndDate = `${prevEndMonthYear}-${String(prevEndDays).padStart(2, '0')}`;
+
+  return {
+    startDate,
+    endDate,
+    label,
+    periodName,
+    shortLabel,
+    monthsList,
+    prevStartDate,
+    prevEndDate,
+  };
 }
 
 export { BULAN_INDONESIA, BULAN_PENDEK, HARI_INDONESIA };

@@ -9,10 +9,13 @@ import {
   getCurrentMonthString,
   getPreviousMonthString,
   getTodayString,
+  getRangeDetails,
+  RangeDetails,
 } from '@/lib/formatters';
 import {
   Category,
   DashboardMetrics,
+  DashboardRange,
   GoldSavings,
   GoldTransaction,
   PaymentMethod,
@@ -26,6 +29,7 @@ import {
 import { Header } from '@/components/layout/Header';
 import { Sidebar, TabKey } from '@/components/layout/Sidebar';
 import { BottomNav } from '@/components/layout/BottomNav';
+import { DashboardPeriodControl } from '@/components/dashboard/DashboardPeriodControl';
 import { SummaryCards } from '@/components/dashboard/SummaryCards';
 import { BudgetAlertBanner } from '@/components/dashboard/BudgetAlertBanner';
 import { ExpenseCharts } from '@/components/dashboard/ExpenseCharts';
@@ -63,6 +67,7 @@ export default function DompetKuApp() {
 
   // App Main State
   const [activeTab, setActiveTab] = useState<TabKey>('dashboard');
+  const [dashboardRange, setDashboardRange] = useState<DashboardRange>('1m');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [monthlyBudgets, setMonthlyBudgets] = useState<Record<string, number>>({});
@@ -284,6 +289,14 @@ export default function DompetKuApp() {
       }
     } catch (e) {}
 
+    // Restore Saved Dashboard Range (1m, 3m, 6m, 1y, all)
+    try {
+      const savedRange = localStorage.getItem('dompetku-dashboard-range') as DashboardRange | null;
+      if (savedRange && ['1m', '3m', '6m', '1y', 'all'].includes(savedRange)) {
+        setDashboardRange(savedRange);
+      }
+    } catch (e) {}
+
     // Check User Session
     const savedUserStr = localStorage.getItem('dompetku-user');
     if (savedUserStr) {
@@ -335,6 +348,32 @@ export default function DompetKuApp() {
     setPrevMonth(getPreviousMonthString(newMonth));
   };
 
+  // Handler Ganti Rentang Dashboard (1 Bulan, 3 Bulan, 6 Bulan, 1 Tahun, Semua)
+  const handleRangeChange = (newRange: DashboardRange) => {
+    setDashboardRange(newRange);
+    try {
+      localStorage.setItem('dompetku-dashboard-range', newRange);
+    } catch (e) {}
+  };
+
+  // Detail Rentang Tanggal & Bulan Dashboard
+  const rangeDetails: RangeDetails = useMemo(() => {
+    return getRangeDetails(currentMonth, dashboardRange);
+  }, [currentMonth, dashboardRange]);
+
+  // Transaksi yang masuk ke dalam rentang Dashboard aktif
+  const rangeTransactions = useMemo(() => {
+    if (dashboardRange === 'all') {
+      return transactions;
+    }
+    return transactions.filter((t) => {
+      if (!t.date) return false;
+      if (rangeDetails.startDate && t.date < rangeDetails.startDate) return false;
+      if (rangeDetails.endDate && t.date > rangeDetails.endDate) return false;
+      return true;
+    });
+  }, [transactions, dashboardRange, rangeDetails]);
+
   // Kumpulan tahun yang tersedia dari transaksi + rentang aktif
   const availableYears = useMemo(() => {
     const yrs = new Set<number>([2024, 2025, 2026, 2027, 2028]);
@@ -374,14 +413,12 @@ export default function DompetKuApp() {
 
   // Dashboard Metrics Calculation
   const metrics: DashboardMetrics = useMemo(() => {
-    const currentMonthTxs = transactions.filter((t) => t.date.startsWith(currentMonth));
-
-    // Pengeluaran & Pemasukan Bulan Ini
-    const totalThisMonth = currentMonthTxs
+    // Pengeluaran & Pemasukan Periode Ini (disesuaikan dengan rangeTransactions)
+    const totalThisMonth = rangeTransactions
       .filter((t) => t.type !== 'income')
       .reduce((sum, t) => sum + t.amount, 0);
 
-    const incomeThisMonth = currentMonthTxs
+    const incomeThisMonth = rangeTransactions
       .filter((t) => t.type === 'income')
       .reduce((sum, t) => sum + t.amount, 0);
 
@@ -403,13 +440,46 @@ export default function DompetKuApp() {
       .filter((t) => t.type === 'income' && t.date >= sevenDaysAgoStr && t.date <= todayStr)
       .reduce((sum, t) => sum + t.amount, 0);
 
-    const monthlyBudget = monthlyBudgets[currentMonth] || 0;
+    // Batas Anggaran untuk rentang yang dipilih
+    let monthlyBudget = 0;
+    if (dashboardRange === '1m') {
+      monthlyBudget = monthlyBudgets[currentMonth] || 0;
+    } else if (dashboardRange === 'all') {
+      monthlyBudget = Object.values(monthlyBudgets).reduce((sum, b) => sum + b, 0);
+    } else {
+      const sumExplicit = rangeDetails.monthsList.reduce(
+        (sum, m) => sum + (monthlyBudgets[m] || 0),
+        0
+      );
+      if (sumExplicit > 0) {
+        monthlyBudget = sumExplicit;
+      } else if (monthlyBudgets[currentMonth]) {
+        monthlyBudget = monthlyBudgets[currentMonth] * rangeDetails.monthsList.length;
+      }
+    }
+
     const remainingBudget = monthlyBudget > 0 ? monthlyBudget - totalThisMonth : 0;
     const budgetUsagePercent =
       monthlyBudget > 0 ? Math.round((totalThisMonth / monthlyBudget) * 100) : 0;
 
-    const prevMonthTxs = transactions.filter((t) => t.date.startsWith(prevMonth) && t.type !== 'income');
-    const previousMonthTotal = prevMonthTxs.reduce((sum, t) => sum + t.amount, 0);
+    // Perbandingan dengan periode sebelumnya berdurasi sama
+    let previousMonthTotal = 0;
+    if (dashboardRange === '1m') {
+      const prevMonthTxs = transactions.filter(
+        (t) => t.date.startsWith(prevMonth) && t.type !== 'income'
+      );
+      previousMonthTotal = prevMonthTxs.reduce((sum, t) => sum + t.amount, 0);
+    } else if (rangeDetails.prevStartDate && rangeDetails.prevEndDate) {
+      const prevTxs = transactions.filter(
+        (t) =>
+          t.type !== 'income' &&
+          t.date &&
+          t.date >= rangeDetails.prevStartDate &&
+          t.date <= rangeDetails.prevEndDate
+      );
+      previousMonthTotal = prevTxs.reduce((sum, t) => sum + t.amount, 0);
+    }
+
     const comparisonAmount = totalThisMonth - previousMonthTotal;
     const comparisonPercent =
       previousMonthTotal > 0
@@ -417,9 +487,11 @@ export default function DompetKuApp() {
         : 0;
 
     const catMap: Record<string, number> = {};
-    currentMonthTxs.filter((t) => t.type !== 'income').forEach((t) => {
-      catMap[t.categoryId] = (catMap[t.categoryId] || 0) + t.amount;
-    });
+    rangeTransactions
+      .filter((t) => t.type !== 'income')
+      .forEach((t) => {
+        catMap[t.categoryId] = (catMap[t.categoryId] || 0) + t.amount;
+      });
 
     let topCatObj: { name: string; amount: number; color: string } | null = null;
     let maxAmount = 0;
@@ -447,17 +519,35 @@ export default function DompetKuApp() {
       monthlyBudget,
       remainingBudget,
       budgetUsagePercent,
-      totalTransactionsCount: currentMonthTxs.length,
+      totalTransactionsCount: rangeTransactions.length,
       topCategory: topCatObj,
       previousMonthTotal,
       comparisonPercent,
       comparisonAmount,
+      range: dashboardRange,
+      rangeLabel: rangeDetails.label,
+      rangePeriodName: rangeDetails.periodName,
       totalSavings,
       savingsThisMonth,
       totalGoldGrams,
       totalGoldEstimatedValue,
     };
-  }, [transactions, categories, monthlyBudgets, currentMonth, prevMonth, todayStr, sevenDaysAgoStr, totalSavings, savingsThisMonth, totalGoldGrams, totalGoldEstimatedValue]);
+  }, [
+    rangeTransactions,
+    transactions,
+    categories,
+    monthlyBudgets,
+    currentMonth,
+    prevMonth,
+    dashboardRange,
+    rangeDetails,
+    todayStr,
+    sevenDaysAgoStr,
+    totalSavings,
+    savingsThisMonth,
+    totalGoldGrams,
+    totalGoldEstimatedValue,
+  ]);
 
   // Filtered transactions for the Transaksi tab
   const filteredTransactions = useMemo(() => {
@@ -808,7 +898,7 @@ export default function DompetKuApp() {
                       Ringkasan Pengeluaran Keuangan
                     </h2>
                     <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-                      {currentUser ? `Halo, ${currentUser.name}!` : ''} Data periode {formatMonthIndonesian(currentMonth)}
+                      {currentUser ? `Halo, ${currentUser.name}!` : ''} Analisis {rangeDetails.periodName} • {rangeDetails.label}
                     </p>
                   </div>
                   <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 self-start sm:self-auto shadow-2xs">
@@ -816,10 +906,23 @@ export default function DompetKuApp() {
                   </span>
                 </div>
 
+                {/* 0. Navigasi Periode & Rentang Multi-Bulan (1 Bulan, 3 Bulan, 6 Bulan, 1 Tahun, Semua) */}
+                <DashboardPeriodControl
+                  currentMonth={currentMonth}
+                  onMonthChange={handleChangeMonth}
+                  range={dashboardRange}
+                  onRangeChange={handleRangeChange}
+                  rangeDetails={rangeDetails}
+                  availableYears={availableYears}
+                  theme={theme}
+                />
+
                 {/* 1. Summary Metric Cards */}
                 <SummaryCards
                   metrics={metrics}
                   currentMonth={currentMonth}
+                  dashboardRange={dashboardRange}
+                  rangePeriodName={rangeDetails.periodName}
                   onOpenBudgetModal={() => setIsBudgetModalOpen(true)}
                   onOpenSavings={(targetTab) => {
                     if (targetTab) {
@@ -837,6 +940,7 @@ export default function DompetKuApp() {
                   totalExpense={metrics.totalThisMonth}
                   remainingBudget={metrics.remainingBudget}
                   budgetUsagePercent={metrics.budgetUsagePercent}
+                  periodName={rangeDetails.periodName}
                   onOpenBudgetModal={() => setIsBudgetModalOpen(true)}
                 />
 
@@ -845,13 +949,15 @@ export default function DompetKuApp() {
                   transactions={transactions}
                   categories={categories}
                   currentMonth={currentMonth}
+                  dashboardRange={dashboardRange}
+                  rangeDetails={rangeDetails}
                   darkMode={darkMode}
                   theme={theme}
                 />
 
                 {/* 4. Recent Transactions */}
                 <RecentTransactions
-                  transactions={transactions}
+                  transactions={rangeTransactions.length > 0 ? rangeTransactions : transactions}
                   categories={categories}
                   onOpenAddModal={() => {
                     setEditingTransaction(null);
