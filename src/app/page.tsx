@@ -924,7 +924,7 @@ export default function DompetKuApp() {
                     Laporan Keuangan & Ekspor Microsoft Excel
                   </h2>
                   <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-                    Analisis mendalam pengeluaran dan unduh buku kerja Microsoft Excel (.xlsx) 3 Sheet profesional
+                    Analisis mendalam keuangan dan unduh buku kerja Microsoft Excel (.xlsx) 5 Sheet lengkap (Pemasukan, Pengeluaran, Tabungan & Portofolio Emas)
                   </p>
                 </div>
 

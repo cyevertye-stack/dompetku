@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCategories, getMonthlyBudgets, getTransactions } from '@/lib/storage';
+import {
+  getCategories,
+  getGoldSavings,
+  getMonthlyBudgets,
+  getSavingsGoals,
+  getSavingsTransactions,
+  getTransactions,
+} from '@/lib/storage';
 import { generateExpenseExcel } from '@/lib/excel-export';
 import { TransactionFilter } from '@/lib/types';
 import { formatDateIndonesian, formatMonthIndonesian, getCurrentMonthString } from '@/lib/formatters';
@@ -7,7 +14,10 @@ import { formatDateIndonesian, formatMonthIndonesian, getCurrentMonthString } fr
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => ({}));
+    const userId = body.userId || undefined;
+
     const filter: TransactionFilter = {
+      userId,
       search: body.search || undefined,
       categoryId: body.categoryId || undefined,
       paymentMethod: body.paymentMethod || undefined,
@@ -17,9 +27,15 @@ export async function POST(request: NextRequest) {
       sortBy: body.sortBy || 'date-desc',
     };
 
-    const transactions = await getTransactions(filter);
-    const categories = await getCategories();
-    const budgets = await getMonthlyBudgets();
+    const [transactions, categories, budgets, savingsGoals, savingsTransactions, goldSavings] =
+      await Promise.all([
+        getTransactions(filter),
+        getCategories(userId),
+        getMonthlyBudgets(userId),
+        getSavingsGoals(userId),
+        getSavingsTransactions(userId),
+        getGoldSavings(userId),
+      ]);
 
     // Determine period label
     let periodLabel = 'Semua Transaksi';
@@ -42,10 +58,13 @@ export async function POST(request: NextRequest) {
       transactions,
       categories,
       totalBudget,
+      savingsGoals,
+      savingsTransactions,
+      goldSavings,
     });
 
     const safePeriod = periodLabel.replace(/[^a-zA-Z0-9]/g, '_');
-    const filename = `Laporan_Pengeluaran_DompetKu_${safePeriod}.xlsx`;
+    const filename = `Laporan_Keuangan_DompetKu_${safePeriod}.xlsx`;
 
     return new NextResponse(excelBuffer as unknown as BodyInit, {
       status: 200,
