@@ -19,6 +19,7 @@ import {
   RangeDetails,
 } from '@/lib/formatters';
 import { DashboardRange, ThemeMode } from '@/lib/types';
+import { CustomDropdown, DropdownOption } from '../ui/CustomDropdown';
 
 interface DashboardPeriodControlProps {
   currentMonth: string;
@@ -74,55 +75,50 @@ export function DashboardPeriodControl({
     return list.sort((a, b) => b.value.localeCompare(a.value));
   }, [availableYears]);
 
+  const dropdownOptions: DropdownOption[] = useMemo(() => {
+    return monthOptions.map((opt) => ({
+      value: opt.value,
+      label: opt.label,
+      badge: opt.value === todayMonth ? 'Bulan Ini' : undefined,
+      icon: <Calendar className={`w-3.5 h-3.5 ${isPink ? 'text-rose-500' : 'text-blue-500'}`} />,
+    }));
+  }, [monthOptions, todayMonth, isPink]);
+
   return (
     <div className="bg-white dark:bg-slate-900 rounded-3xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-3.5 transition-colors">
       {/* BARIS 1: Navigasi Bulan & Tahun (Mobile & Desktop Friendly) */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         {/* Tombol Navigasi < [Bulan Tahun] > */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-2xs">
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 bg-slate-100/90 dark:bg-slate-800/90 p-1 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-2xs">
             {/* Tombol Mundur 1 Bulan */}
             <button
               type="button"
               onClick={() => onMonthChange(prevMonthStr)}
-              className="p-2 sm:p-2 hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl transition-all cursor-pointer active:scale-90"
+              className="p-2 hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl transition-all cursor-pointer active:scale-90"
               title={`Bulan Lalu: ${formatMonthIndonesian(prevMonthStr)}`}
             >
               <ChevronLeft className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
             </button>
 
-            {/* Dropdown Pilihan Bulan & Tahun */}
-            <div className="relative px-2 sm:px-3 flex items-center gap-2">
-              <Calendar
-                className={`w-4 h-4 shrink-0 ${
-                  isPink
-                    ? 'text-rose-500'
-                    : 'text-blue-600 dark:text-blue-400'
-                }`}
-              />
-              <select
+            {/* Modern Custom Dropdown Pilihan Bulan & Tahun */}
+            <div className="w-44 xs:w-48 sm:w-56">
+              <CustomDropdown
                 value={currentMonth}
-                onChange={(e) => onMonthChange(e.target.value)}
-                className="bg-transparent text-xs sm:text-sm font-black text-slate-900 dark:text-white focus:outline-hidden cursor-pointer"
-                title="Pilih Bulan & Tahun Target"
-              >
-                {monthOptions.map((opt) => (
-                  <option
-                    key={opt.value}
-                    value={opt.value}
-                    className="bg-white dark:bg-slate-900 text-slate-800 dark:text-white font-medium"
-                  >
-                    {opt.label} {opt.value === todayMonth ? '• (Bulan Ini)' : ''}
-                  </option>
-                ))}
-              </select>
+                onChange={onMonthChange}
+                options={dropdownOptions}
+                size="sm"
+                searchable={dropdownOptions.length > 8}
+                searchPlaceholder="Cari bulan & tahun..."
+                icon={<Calendar className={`w-4 h-4 ${isPink ? 'text-rose-500' : 'text-blue-600 dark:text-blue-400'}`} />}
+              />
             </div>
 
             {/* Tombol Maju 1 Bulan */}
             <button
               type="button"
               onClick={() => onMonthChange(nextMonthStr)}
-              className="p-2 sm:p-2 hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl transition-all cursor-pointer active:scale-90"
+              className="p-2 hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl transition-all cursor-pointer active:scale-90"
               title={`Bulan Depan: ${formatMonthIndonesian(nextMonthStr)}`}
             >
               <ChevronRight className="w-4 h-4 sm:w-4.5 sm:h-4.5" />

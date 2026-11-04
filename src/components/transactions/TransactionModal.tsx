@@ -15,6 +15,8 @@ import {
 import { Category, PaymentMethod, Transaction } from '@/lib/types';
 import { formatRupiah, getTodayString, parseRupiahInput } from '@/lib/formatters';
 import { CategoryIcon } from '../ui/CategoryIcon';
+import { CustomDropdown, DropdownOption } from '../ui/CustomDropdown';
+import { getPaymentMethodIcon } from './TransactionFilter';
 
 interface TransactionModalProps {
   isOpen: boolean;
@@ -431,20 +433,16 @@ export function TransactionModal({
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                 Metode / Rekening
               </label>
-              <div className="relative">
-                <CreditCard className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                <select
-                  value={paymentMethod}
-                  onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
-                  className="w-full pl-10 pr-8 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white text-xs sm:text-sm font-semibold focus:outline-hidden focus:ring-2 focus:ring-blue-500 cursor-pointer"
-                >
-                  {PAYMENT_METHODS.map((method) => (
-                    <option key={method} value={method}>
-                      {method}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <CustomDropdown
+                value={paymentMethod}
+                onChange={(val) => setPaymentMethod(val as PaymentMethod)}
+                options={PAYMENT_METHODS.map((method) => ({
+                  value: method,
+                  label: method,
+                  icon: getPaymentMethodIcon(method),
+                }))}
+                size="md"
+              />
             </div>
           </div>
 

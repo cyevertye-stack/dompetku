@@ -12,6 +12,15 @@ import {
   ChevronUp,
   Sparkles,
   Check,
+  CreditCard,
+  Banknote,
+  Landmark,
+  Smartphone,
+  Layers,
+  ArrowUpRight,
+  ArrowDownRight,
+  Clock,
+  Tag,
 } from 'lucide-react';
 import { Category, PaymentMethod, TransactionFilter as FilterType } from '@/lib/types';
 import {
@@ -20,6 +29,8 @@ import {
   getPreviousMonthString,
   formatMonthIndonesian,
 } from '@/lib/formatters';
+import { CustomDropdown, DropdownOption } from '../ui/CustomDropdown';
+import { CategoryIcon } from '../ui/CategoryIcon';
 
 interface TransactionFilterProps {
   filter: FilterType;
@@ -27,6 +38,14 @@ interface TransactionFilterProps {
   onReset: () => void;
   categories: Category[];
   availableYears?: number[];
+}
+
+export function getPaymentMethodIcon(method: string) {
+  if (method.includes('Tunai')) return <Banknote className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />;
+  if (method.includes('Transfer') || method.includes('Bank')) return <Landmark className="w-4 h-4 text-blue-600 dark:text-blue-400" />;
+  if (method.includes('E-Wallet') || method.includes('GoPay') || method.includes('OVO')) return <Smartphone className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />;
+  if (method.includes('Kartu') || method.includes('Debit') || method.includes('Kredit')) return <CreditCard className="w-4 h-4 text-purple-600 dark:text-purple-400" />;
+  return <Layers className="w-4 h-4 text-slate-500" />;
 }
 
 const PAYMENT_METHODS: PaymentMethod[] = [
@@ -116,6 +135,87 @@ export function TransactionFilter({
   const isPresetThisMonth = filter.month === currentMonthStr;
   const isPresetLastMonth = filter.month === prevMonthStr;
   const isPresetThisYear = filter.month === currentYearStr;
+
+  // Options untuk masing-masing custom dropdown
+  const sortOptions: DropdownOption<string>[] = useMemo(
+    () => [
+      {
+        value: 'date-desc',
+        label: 'Tanggal Terbaru',
+        icon: <Calendar className="w-3.5 h-3.5 text-blue-500" />,
+      },
+      {
+        value: 'date-asc',
+        label: 'Tanggal Terlama',
+        icon: <Clock className="w-3.5 h-3.5 text-slate-400" />,
+      },
+      {
+        value: 'amount-desc',
+        label: 'Nominal Terbesar',
+        icon: <ArrowUpRight className="w-3.5 h-3.5 text-rose-500" />,
+      },
+      {
+        value: 'amount-asc',
+        label: 'Nominal Terkecil',
+        icon: <ArrowDownRight className="w-3.5 h-3.5 text-emerald-500" />,
+      },
+    ],
+    []
+  );
+
+  const categoryOptions: DropdownOption<string>[] = useMemo(() => {
+    return [
+      {
+        value: 'all',
+        label: 'Semua Kategori',
+        icon: <Layers className="w-3.5 h-3.5 text-slate-400" />,
+      },
+      ...categories.map((c) => ({
+        value: c.id,
+        label: c.name,
+        colorDot: c.color,
+        icon: <CategoryIcon name={c.icon} color={c.color} size={15} />,
+      })),
+    ];
+  }, [categories]);
+
+  const paymentOptions: DropdownOption<string>[] = useMemo(() => {
+    return [
+      {
+        value: 'all',
+        label: 'Semua Metode',
+        icon: <CreditCard className="w-3.5 h-3.5 text-slate-400" />,
+      },
+      ...PAYMENT_METHODS.map((m) => ({
+        value: m,
+        label: m,
+        icon: getPaymentMethodIcon(m),
+      })),
+    ];
+  }, []);
+
+  const monthFilterOptions: DropdownOption<string>[] = useMemo(() => {
+    return [
+      { value: 'all', label: 'Semua Bulan' },
+      ...BULAN_INDONESIA.map((name, idx) => {
+        const mStr = String(idx + 1).padStart(2, '0');
+        return {
+          value: mStr,
+          label: `${mStr} - ${name}`,
+        };
+      }),
+    ];
+  }, []);
+
+  const yearFilterOptions: DropdownOption<string>[] = useMemo(() => {
+    return [
+      { value: 'all', label: 'Semua Tahun' },
+      ...availableYears.map((yr) => ({
+        value: String(yr),
+        label: `Tahun ${yr}`,
+      })),
+    ];
+  }, [availableYears]);
 
   return (
     <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-3.5">
@@ -227,22 +327,16 @@ export function TransactionFilter({
 
         {/* Sort & Toggle Filter Buttons */}
         <div className="flex items-center gap-2 shrink-0">
-          <div className="relative flex-1 sm:w-48">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-              <ArrowUpDown className="w-3.5 h-3.5" />
-            </div>
-            <select
+          <div className="w-full sm:w-52">
+            <CustomDropdown
               value={filter.sortBy || 'date-desc'}
-              onChange={(e) =>
-                onChange({ ...filter, sortBy: e.target.value as FilterType['sortBy'] })
+              onChange={(val) =>
+                onChange({ ...filter, sortBy: val as FilterType['sortBy'] })
               }
-              className="w-full pl-9 pr-7 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-100 text-xs font-semibold focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
-            >
-              <option value="date-desc">Urutkan: Tanggal Terbaru</option>
-              <option value="date-asc">Urutkan: Tanggal Terlama</option>
-              <option value="amount-desc">Urutkan: Nominal Terbesar</option>
-              <option value="amount-asc">Urutkan: Nominal Terkecil</option>
-            </select>
+              options={sortOptions}
+              size="md"
+              icon={<ArrowUpDown className="w-3.5 h-3.5 text-blue-500" />}
+            />
           </div>
 
           {/* Toggle filter dropdown button on mobile */}
@@ -269,18 +363,14 @@ export function TransactionFilter({
           <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
             Kategori
           </label>
-          <select
+          <CustomDropdown
             value={filter.categoryId || 'all'}
-            onChange={(e) => onChange({ ...filter, categoryId: e.target.value })}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-100 text-xs focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
-          >
-            <option value="all">Semua Kategori</option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+            onChange={(val) => onChange({ ...filter, categoryId: val })}
+            options={categoryOptions}
+            size="sm"
+            searchable={categoryOptions.length > 6}
+            searchPlaceholder="Cari kategori..."
+          />
         </div>
 
         {/* Dropdown 2: Metode Pembayaran */}
@@ -288,18 +378,12 @@ export function TransactionFilter({
           <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
             Metode Pembayaran
           </label>
-          <select
+          <CustomDropdown
             value={filter.paymentMethod || 'all'}
-            onChange={(e) => onChange({ ...filter, paymentMethod: e.target.value })}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-100 text-xs focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
-          >
-            <option value="all">Semua Metode</option>
-            {PAYMENT_METHODS.map((m) => (
-              <option key={m} value={m}>
-                {m}
-              </option>
-            ))}
-          </select>
+            onChange={(val) => onChange({ ...filter, paymentMethod: val })}
+            options={paymentOptions}
+            size="sm"
+          />
         </div>
 
         {/* Dropdown 3: Pilih Bulan Kapan */}
@@ -307,21 +391,15 @@ export function TransactionFilter({
           <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
             Pilih Bulan
           </label>
-          <select
+          <CustomDropdown
             value={selectedMonth}
-            onChange={(e) => handleMonthChange(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-100 text-xs font-semibold focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
-          >
-            <option value="all">Semua Bulan</option>
-            {BULAN_INDONESIA.map((name, idx) => {
-              const mStr = String(idx + 1).padStart(2, '0');
-              return (
-                <option key={mStr} value={mStr}>
-                  {mStr} - {name}
-                </option>
-              );
-            })}
-          </select>
+            onChange={handleMonthChange}
+            options={monthFilterOptions}
+            size="sm"
+            searchable={monthFilterOptions.length > 8}
+            searchPlaceholder="Cari bulan..."
+            icon={<Calendar className="w-3.5 h-3.5 text-blue-500" />}
+          />
         </div>
 
         {/* Dropdown 4: Pilih Tahun Kapan */}
@@ -329,18 +407,12 @@ export function TransactionFilter({
           <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
             Pilih Tahun
           </label>
-          <select
+          <CustomDropdown
             value={selectedYear}
-            onChange={(e) => handleYearChange(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-100 text-xs font-semibold focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
-          >
-            <option value="all">Semua Tahun</option>
-            {availableYears.map((yr) => (
-              <option key={yr} value={String(yr)}>
-                Tahun {yr}
-              </option>
-            ))}
-          </select>
+            onChange={handleYearChange}
+            options={yearFilterOptions}
+            size="sm"
+          />
         </div>
 
         {/* Reset Filter Button */}

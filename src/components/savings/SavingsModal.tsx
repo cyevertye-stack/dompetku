@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { formatRupiah } from '@/lib/formatters';
 import { SavingsGoal, SavingsTransaction } from '@/lib/types';
+import { CustomDropdown, DropdownOption } from '../ui/CustomDropdown';
 
 interface SavingsModalProps {
   isOpen: boolean;
@@ -279,18 +280,24 @@ export function SavingsModal({
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                   Tujuan / Pos Tabungan
                 </label>
-                <select
+                <CustomDropdown
                   value={txGoalId}
-                  onChange={(e) => setTxGoalId(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 cursor-pointer"
-                >
-                  <option value="">Tabungan Bebas / Umum (Tanpa Target Khusus)</option>
-                  {goals.map((g) => (
-                    <option key={g.id} value={g.id}>
-                      🎯 {g.title} (Target: {formatRupiah(g.targetAmount)})
-                    </option>
-                  ))}
-                </select>
+                  onChange={setTxGoalId}
+                  options={[
+                    {
+                      value: '',
+                      label: 'Tabungan Bebas / Umum (Tanpa Target Khusus)',
+                      icon: <PiggyBank className="w-4 h-4 text-emerald-500" />,
+                    },
+                    ...goals.map((g) => ({
+                      value: g.id,
+                      label: g.title,
+                      badge: `Target: ${formatRupiah(g.targetAmount)}`,
+                      icon: <Target className="w-4 h-4 text-blue-500" />,
+                    })),
+                  ]}
+                  size="md"
+                />
               </div>
 
               {/* Tanggal */}

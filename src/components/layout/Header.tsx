@@ -24,6 +24,7 @@ import {
   BULAN_INDONESIA,
 } from '@/lib/formatters';
 import { ThemeMode, User as UserType } from '@/lib/types';
+import { CustomDropdown, DropdownOption } from '../ui/CustomDropdown';
 
 interface HeaderProps {
   currentMonth: string;
@@ -79,6 +80,15 @@ export function Header({
     return list.sort((a, b) => b.value.localeCompare(a.value));
   }, [availableYears]);
 
+  const dropdownOptions: DropdownOption[] = useMemo(() => {
+    return monthOptions.map((opt) => ({
+      value: opt.value,
+      label: opt.label,
+      badge: opt.value === todayMonth ? 'Bulan Ini' : undefined,
+      icon: <Calendar className="w-3.5 h-3.5 text-blue-500" />,
+    }));
+  }, [monthOptions, todayMonth]);
+
   const getThemeTitle = () => {
     if (theme === 'light') return 'Mode: Terang ☀️ (Klik untuk Mode Gelap)';
     if (theme === 'dark') return 'Mode: Gelap 🌙 (Klik untuk Mode Soft Pink)';
@@ -114,43 +124,35 @@ export function Header({
 
         {/* Month & Year Navigator (Tablet & Desktop: sm:flex) */}
         <div className="hidden sm:flex items-center gap-1.5">
-          <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 sm:p-1 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-2xs">
+          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-2xs">
             {/* Tombol Bulan Sebelumnya */}
             <button
               type="button"
               onClick={() => onMonthChange && onMonthChange(prevMonthStr)}
-              className="p-1 sm:p-1.5 hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl transition-all cursor-pointer active:scale-90"
+              className="p-1.5 hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl transition-all cursor-pointer active:scale-90"
               title={`Bulan Lalu: ${formatMonthIndonesian(prevMonthStr)}`}
             >
               <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
 
-            {/* Dropdown Pilihan Bulan & Tahun */}
-            <div className="relative px-1 sm:px-2 flex items-center gap-1 sm:gap-1.5">
-              <Calendar className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0 hidden xs:inline" />
-              <select
+            {/* Custom Modern Dropdown Pilihan Bulan & Tahun */}
+            <div className="w-40 sm:w-48">
+              <CustomDropdown
                 value={currentMonth}
-                onChange={(e) => onMonthChange && onMonthChange(e.target.value)}
-                className="bg-transparent text-[11px] sm:text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-hidden cursor-pointer max-w-[130px] sm:max-w-none"
-                title="Pilih Bulan & Tahun untuk Melihat Data Periode Tersebut"
-              >
-                {monthOptions.map((opt) => (
-                  <option
-                    key={opt.value}
-                    value={opt.value}
-                    className="bg-white dark:bg-slate-900 text-slate-800 dark:text-white"
-                  >
-                    {opt.label} {opt.value === todayMonth ? '• (Bulan Ini)' : ''}
-                  </option>
-                ))}
-              </select>
+                onChange={(m) => onMonthChange && onMonthChange(m)}
+                options={dropdownOptions}
+                size="sm"
+                searchable={dropdownOptions.length > 8}
+                searchPlaceholder="Cari bulan/tahun..."
+                icon={<Calendar className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />}
+              />
             </div>
 
             {/* Tombol Bulan Berikutnya */}
             <button
               type="button"
               onClick={() => onMonthChange && onMonthChange(nextMonthStr)}
-              className="p-1 sm:p-1.5 hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl transition-all cursor-pointer active:scale-90"
+              className="p-1.5 hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl transition-all cursor-pointer active:scale-90"
               title={`Bulan Berikutnya: ${formatMonthIndonesian(nextMonthStr)}`}
             >
               <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
