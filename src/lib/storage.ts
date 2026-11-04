@@ -182,7 +182,14 @@ export async function getTransactions(filter?: TransactionFilter): Promise<Trans
             list = list.filter((t) => t.paymentMethod === filter.paymentMethod);
           }
           if (filter.month && filter.month !== 'all') {
-            list = list.filter((t) => t.date.startsWith(filter.month!));
+            if (filter.month.startsWith('-')) {
+              const m = filter.month.substring(1);
+              list = list.filter((t) => t.date.split('-')[1] === m);
+            } else if (filter.month.length === 4) {
+              list = list.filter((t) => t.date.startsWith(`${filter.month}-`));
+            } else {
+              list = list.filter((t) => t.date.startsWith(filter.month!));
+            }
           }
           if (filter.startDate) {
             list = list.filter((t) => t.date >= filter.startDate!);
@@ -238,7 +245,14 @@ export async function getTransactions(filter?: TransactionFilter): Promise<Trans
     list = list.filter((t) => t.paymentMethod === filter.paymentMethod);
   }
   if (filter.month && filter.month !== 'all') {
-    list = list.filter((t) => t.date.startsWith(filter.month!));
+    if (filter.month.startsWith('-')) {
+      const m = filter.month.substring(1);
+      list = list.filter((t) => t.date.split('-')[1] === m);
+    } else if (filter.month.length === 4) {
+      list = list.filter((t) => t.date.startsWith(`${filter.month}-`));
+    } else {
+      list = list.filter((t) => t.date.startsWith(filter.month!));
+    }
   }
   if (filter.startDate) {
     list = list.filter((t) => t.date >= filter.startDate!);

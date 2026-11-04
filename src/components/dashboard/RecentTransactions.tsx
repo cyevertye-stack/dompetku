@@ -24,7 +24,11 @@ export function RecentTransactions({
   const categoryMap = new Map<string, Category>();
   categories.forEach((c) => categoryMap.set(c.id, c));
 
-  const recentTxs = transactions.slice(0, 5);
+  const sortedTxs = React.useMemo(() => {
+    return [...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [transactions]);
+
+  const recentTxs = sortedTxs.slice(0, 5);
 
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-xs transition-colors">

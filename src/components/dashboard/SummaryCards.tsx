@@ -16,7 +16,7 @@ import {
   Coins,
   ShieldCheck,
 } from 'lucide-react';
-import { formatRupiah } from '@/lib/formatters';
+import { formatRupiah, formatMonthIndonesian, getCurrentMonthString } from '@/lib/formatters';
 import { DashboardMetrics } from '@/lib/types';
 
 export type SavingsCardMode = 'total' | 'money' | 'gold';
@@ -25,10 +25,19 @@ interface SummaryCardsProps {
   metrics: DashboardMetrics;
   onOpenBudgetModal: () => void;
   onOpenSavings?: (targetSubTab?: 'money' | 'gold') => void;
+  currentMonth?: string;
 }
 
-export function SummaryCards({ metrics, onOpenBudgetModal, onOpenSavings }: SummaryCardsProps) {
+export function SummaryCards({
+  metrics,
+  onOpenBudgetModal,
+  onOpenSavings,
+  currentMonth,
+}: SummaryCardsProps) {
   const [savingsMode, setSavingsMode] = useState<SavingsCardMode>('total');
+  const todayMonth = React.useMemo(() => getCurrentMonthString(), []);
+  const isCustomMonth = Boolean(currentMonth && currentMonth !== todayMonth);
+  const monthName = currentMonth ? formatMonthIndonesian(currentMonth) : '';
 
   // Load saved savings card mode from localStorage
   useEffect(() => {
@@ -72,7 +81,7 @@ export function SummaryCards({ metrics, onOpenBudgetModal, onOpenSavings }: Summ
         {/* Master Cashflow Hero Card */}
         <div className="bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white rounded-3xl p-5 shadow-xl border border-slate-800">
           <div className="flex items-center justify-between text-xs text-slate-300 font-semibold mb-1">
-            <span>Sisa Saldo Kas Bulan Ini</span>
+            <span>{isCustomMonth ? `Sisa Saldo Kas (${monthName})` : 'Sisa Saldo Kas Bulan Ini'}</span>
             <span
               className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                 isCashflowPositive
@@ -96,7 +105,7 @@ export function SummaryCards({ metrics, onOpenBudgetModal, onOpenSavings }: Summ
           <div className="grid grid-cols-2 gap-3 pt-3 mt-3 border-t border-slate-800/80 text-xs">
             <div className="bg-slate-800/50 p-2.5 rounded-xl border border-slate-700/40">
               <span className="text-[10px] uppercase font-bold text-emerald-400 block mb-0.5">
-                🟢 Pemasukan
+                🟢 {isCustomMonth ? `Pemasukan (${monthName})` : 'Pemasukan'}
               </span>
               <span className="font-extrabold text-sm text-white">
                 +{formatRupiah(metrics.incomeThisMonth || 0)}
@@ -104,7 +113,7 @@ export function SummaryCards({ metrics, onOpenBudgetModal, onOpenSavings }: Summ
             </div>
             <div className="bg-slate-800/50 p-2.5 rounded-xl border border-slate-700/40">
               <span className="text-[10px] uppercase font-bold text-rose-400 block mb-0.5">
-                🔴 Pengeluaran
+                🔴 {isCustomMonth ? `Pengeluaran (${monthName})` : 'Pengeluaran'}
               </span>
               <span className="font-extrabold text-sm text-white">
                 -{formatRupiah(metrics.totalThisMonth || 0)}
@@ -240,8 +249,8 @@ export function SummaryCards({ metrics, onOpenBudgetModal, onOpenSavings }: Summ
         <div className="relative bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md card-interactive flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Pemasukan Bulan Ini
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
+                {isCustomMonth ? `Pemasukan (${monthName})` : 'Pemasukan Bulan Ini'}
               </span>
               <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 rounded-xl transition-transform duration-200 hover:scale-110">
                 <TrendingUp className="w-5 h-5" />
@@ -263,8 +272,8 @@ export function SummaryCards({ metrics, onOpenBudgetModal, onOpenSavings }: Summ
         <div className="relative bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md card-interactive flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Pengeluaran Bulan Ini
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
+                {isCustomMonth ? `Pengeluaran (${monthName})` : 'Pengeluaran Bulan Ini'}
               </span>
               <div className="p-2.5 bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 rounded-xl transition-transform duration-200 hover:scale-110">
                 <TrendingDown className="w-5 h-5" />
@@ -293,7 +302,7 @@ export function SummaryCards({ metrics, onOpenBudgetModal, onOpenSavings }: Summ
             ) : (
               <span className="text-slate-400 font-medium">Sama</span>
             )}
-            <span className="text-slate-400 dark:text-slate-500">vs bulan lalu</span>
+            <span className="text-slate-400 dark:text-slate-500">vs bulan sebelumnya</span>
           </div>
         </div>
 

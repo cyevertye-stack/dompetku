@@ -44,6 +44,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { SavingsView } from '@/components/savings/SavingsView';
 import { TEMPLATE_CATEGORIES } from '@/lib/sample-data';
+import { Calendar, RotateCcw } from 'lucide-react';
 
 export default function DompetKuApp() {
   // Safe Date initialization on Client mount
@@ -246,7 +247,7 @@ export default function DompetKuApp() {
     setPrevMonth(prevM);
     setTodayStr(tday);
     setSevenDaysAgoStr(sevenStr);
-    setTxFilter((prev) => ({ ...prev, month: currM }));
+    setTxFilter((prev) => ({ ...prev, month: 'all' }));
 
     // Check Theme (Support 3 modes: light, dark, pink)
     try {
@@ -327,6 +328,24 @@ export default function DompetKuApp() {
       localStorage.setItem('dompetku-active-tab', tab);
     } catch (e) {}
   };
+
+  // Month Change Handler (memungkinkan cek bulan lalu / bulan kapan saja di dashboard)
+  const handleChangeMonth = (newMonth: string) => {
+    setCurrentMonth(newMonth);
+    setPrevMonth(getPreviousMonthString(newMonth));
+  };
+
+  // Kumpulan tahun yang tersedia dari transaksi + rentang aktif
+  const availableYears = useMemo(() => {
+    const yrs = new Set<number>([2024, 2025, 2026, 2027, 2028]);
+    transactions.forEach((t) => {
+      if (t.date) {
+        const y = parseInt(t.date.split('-')[0], 10);
+        if (!isNaN(y)) yrs.add(y);
+      }
+    });
+    return Array.from(yrs).sort((a, b) => b - a);
+  }, [transactions]);
 
   useEffect(() => {
     if (isMounted) {
@@ -466,7 +485,14 @@ export default function DompetKuApp() {
     }
 
     if (txFilter.month && txFilter.month !== 'all') {
-      list = list.filter((t) => t.date.startsWith(txFilter.month!));
+      if (txFilter.month.startsWith('-')) {
+        const m = txFilter.month.substring(1);
+        list = list.filter((t) => t.date.split('-')[1] === m);
+      } else if (txFilter.month.length === 4) {
+        list = list.filter((t) => t.date.startsWith(`${txFilter.month}-`));
+      } else {
+        list = list.filter((t) => t.date.startsWith(txFilter.month!));
+      }
     }
 
     if (txFilter.startDate) {
@@ -740,6 +766,8 @@ export default function DompetKuApp() {
           onQuickExport={handleQuickExport}
           onOpenSettings={() => handleTabChange('settings')}
           onLogout={handleLogout}
+          onMonthChange={handleChangeMonth}
+          availableYears={availableYears}
         />
 
         {/* Scrollable Page Views */}
@@ -748,6 +776,31 @@ export default function DompetKuApp() {
             {/* VIEW 1: DASHBOARD */}
             {activeTab === 'dashboard' && (
               <div key="view-dashboard" className="space-y-6 animate-fade-slide">
+                {/* Banner Peringatan jika melihat Bulan Lalu / Bulan Lain */}
+                {currentMonth !== getCurrentMonthString() && (
+                  <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/30 border border-amber-200 dark:border-amber-800 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                    <div className="flex items-center gap-2.5 text-xs text-amber-900 dark:text-amber-200">
+                      <Calendar className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />
+                      <div>
+                        <p className="font-bold text-sm">
+                          Melihat Periode: {formatMonthIndonesian(currentMonth)}
+                        </p>
+                        <p className="text-[11px] text-amber-700 dark:text-amber-300 mt-0.5">
+                          Seluruh metrik, sisa anggaran, dan grafik otomatis menyesuaikan dengan periode ini.
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleChangeMonth(getCurrentMonthString())}
+                      className="self-start sm:self-auto px-4 py-2 bg-amber-600 hover:bg-amber-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1.5"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>Kembali ke Bulan Ini</span>
+                    </button>
+                  </div>
+                )}
+
                 {/* Greeting & Date */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
@@ -755,7 +808,7 @@ export default function DompetKuApp() {
                       Ringkasan Pengeluaran Keuangan
                     </h2>
                     <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-                      {currentUser ? `Halo, ${currentUser.name}!` : ''} Pantau dan kelola arus kas keluar Anda secara real-time
+                      {currentUser ? `Halo, ${currentUser.name}!` : ''} Data periode {formatMonthIndonesian(currentMonth)}
                     </p>
                   </div>
                   <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 self-start sm:self-auto shadow-2xs">
@@ -766,6 +819,7 @@ export default function DompetKuApp() {
                 {/* 1. Summary Metric Cards */}
                 <SummaryCards
                   metrics={metrics}
+                  currentMonth={currentMonth}
                   onOpenBudgetModal={() => setIsBudgetModalOpen(true)}
                   onOpenSavings={(targetTab) => {
                     if (targetTab) {
@@ -839,13 +893,15 @@ export default function DompetKuApp() {
                   onReset={() =>
                     setTxFilter({
                       search: '',
+                      type: 'all',
                       categoryId: 'all',
                       paymentMethod: 'all',
-                      month: currentMonth,
+                      month: 'all',
                       sortBy: 'date-desc',
                     })
                   }
                   categories={categories}
+                  availableYears={availableYears}
                 />
 
                 {/* Transaction List (Desktop Table / Mobile Cards) */}

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Wallet,
   PlusCircle,
@@ -12,8 +12,17 @@ import {
   Flower2,
   LogOut,
   User,
+  ChevronLeft,
+  ChevronRight,
+  RotateCcw,
 } from 'lucide-react';
-import { formatMonthIndonesian } from '@/lib/formatters';
+import {
+  formatMonthIndonesian,
+  getCurrentMonthString,
+  getPreviousMonthString,
+  getNextMonthString,
+  BULAN_INDONESIA,
+} from '@/lib/formatters';
 import { ThemeMode, User as UserType } from '@/lib/types';
 
 interface HeaderProps {
@@ -28,6 +37,8 @@ interface HeaderProps {
   onQuickExport: () => void;
   onOpenSettings: () => void;
   onLogout: () => void;
+  onMonthChange?: (month: string) => void;
+  availableYears?: number[];
 }
 
 export function Header({
@@ -42,43 +53,120 @@ export function Header({
   onQuickExport,
   onOpenSettings,
   onLogout,
+  onMonthChange,
+  availableYears = [2024, 2025, 2026, 2027, 2028],
 }: HeaderProps) {
   const handleToggle = onToggleTheme || onToggleDarkMode;
+
+  const todayMonth = useMemo(() => getCurrentMonthString(), []);
+  const prevMonthStr = useMemo(() => getPreviousMonthString(currentMonth), [currentMonth]);
+  const nextMonthStr = useMemo(() => getNextMonthString(currentMonth), [currentMonth]);
+  const isCurrentMonth = currentMonth === todayMonth;
+
+  // Generate options untuk dropdown pilihan bulan dan tahun
+  const monthOptions = useMemo(() => {
+    const list: { value: string; label: string }[] = [];
+    availableYears.forEach((year) => {
+      BULAN_INDONESIA.forEach((name, idx) => {
+        const m = String(idx + 1).padStart(2, '0');
+        list.push({
+          value: `${year}-${m}`,
+          label: `${name} ${year}`,
+        });
+      });
+    });
+    // Urutkan dari yang terbaru ke terlama
+    return list.sort((a, b) => b.value.localeCompare(a.value));
+  }, [availableYears]);
 
   const getThemeTitle = () => {
     if (theme === 'light') return 'Mode: Terang ☀️ (Klik untuk Mode Gelap)';
     if (theme === 'dark') return 'Mode: Gelap 🌙 (Klik untuk Mode Soft Pink)';
     return 'Mode: Soft Pink 🌸 (Klik untuk Mode Terang)';
   };
+
   return (
-    <header className="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 px-4 sm:px-8 py-3.5 flex items-center justify-between gap-4 transition-colors">
+    <header className="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 px-3.5 sm:px-8 py-3 flex items-center justify-between gap-3 transition-colors">
       {/* Brand logo for mobile (sidebar handles desktop) */}
-      <div className="flex items-center gap-3">
-        <div className="lg:hidden flex items-center gap-2.5">
+      <div className="flex items-center gap-2.5 sm:gap-4">
+        <div className="lg:hidden flex items-center gap-2">
           <img
             src="/icon-192.png"
             alt="DompetKu"
-            className="w-9 h-9 rounded-xl shadow-md shadow-blue-500/20 object-cover border border-slate-200 dark:border-slate-700"
+            className="w-8 h-8 rounded-xl shadow-md shadow-blue-500/20 object-cover border border-slate-200 dark:border-slate-700"
           />
           <div>
             <h1 className="text-base font-black tracking-tight text-slate-900 dark:text-white leading-none">
               Dompet<span className="text-blue-600 dark:text-blue-400">Ku</span>
             </h1>
-            <p className="text-[10px] text-slate-400 font-semibold tracking-wide mt-0.5">
+            <p className="text-[9px] text-slate-400 font-semibold tracking-wide mt-0.5">
               Personal Finance
             </p>
           </div>
         </div>
 
-        {/* Current Active Month Pill */}
-        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-slate-100/80 dark:bg-slate-800 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300">
-          <Calendar className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-          <span>Periode: {formatMonthIndonesian(currentMonth)}</span>
+        {/* Month & Year Navigator (Desktop & Mobile) */}
+        <div className="flex items-center gap-1.5">
+          <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 sm:p-1 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-2xs">
+            {/* Tombol Bulan Sebelumnya */}
+            <button
+              type="button"
+              onClick={() => onMonthChange && onMonthChange(prevMonthStr)}
+              className="p-1 sm:p-1.5 hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl transition-all cursor-pointer active:scale-90"
+              title={`Bulan Lalu: ${formatMonthIndonesian(prevMonthStr)}`}
+            >
+              <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            </button>
+
+            {/* Dropdown Pilihan Bulan & Tahun */}
+            <div className="relative px-1 sm:px-2 flex items-center gap-1 sm:gap-1.5">
+              <Calendar className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0 hidden xs:inline" />
+              <select
+                value={currentMonth}
+                onChange={(e) => onMonthChange && onMonthChange(e.target.value)}
+                className="bg-transparent text-[11px] sm:text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-hidden cursor-pointer max-w-[130px] sm:max-w-none"
+                title="Pilih Bulan & Tahun untuk Melihat Data Periode Tersebut"
+              >
+                {monthOptions.map((opt) => (
+                  <option
+                    key={opt.value}
+                    value={opt.value}
+                    className="bg-white dark:bg-slate-900 text-slate-800 dark:text-white"
+                  >
+                    {opt.label} {opt.value === todayMonth ? '• (Bulan Ini)' : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Tombol Bulan Berikutnya */}
+            <button
+              type="button"
+              onClick={() => onMonthChange && onMonthChange(nextMonthStr)}
+              className="p-1 sm:p-1.5 hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl transition-all cursor-pointer active:scale-90"
+              title={`Bulan Berikutnya: ${formatMonthIndonesian(nextMonthStr)}`}
+            >
+              <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            </button>
+          </div>
+
+          {/* Tombol Cepat Kembali ke Bulan Ini jika sedang melihat bulan lampau */}
+          {!isCurrentMonth && onMonthChange && (
+            <button
+              type="button"
+              onClick={() => onMonthChange(todayMonth)}
+              className="hidden md:inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 rounded-xl transition-all hover:bg-blue-100 active:scale-95 cursor-pointer shadow-2xs"
+              title="Kembali ke Bulan Berjalan"
+            >
+              <RotateCcw className="w-3 h-3" />
+              <span>Bulan Ini</span>
+            </button>
+          )}
         </div>
       </div>
 
       {/* Action Buttons & Profile */}
-      <div className="flex items-center gap-2 sm:gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
         {/* 3-Mode Theme Toggle (Light, Dark, Soft Pink) */}
         <button
           onClick={handleToggle}
@@ -86,28 +174,25 @@ export function Header({
           title={getThemeTitle()}
         >
           {theme === 'pink' ? (
-            <Flower2 className="w-5 h-5 text-rose-500 animate-in zoom-in-75 duration-200" />
+            <Flower2 className="w-4 h-4 sm:w-5 sm:h-5 text-rose-500 animate-in zoom-in-75 duration-200" />
           ) : theme === 'dark' || (darkMode && !theme) ? (
-            <Moon className="w-5 h-5 text-indigo-400 animate-in zoom-in-75 duration-200" />
+            <Moon className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-400 animate-in zoom-in-75 duration-200" />
           ) : (
-            <Sun className="w-5 h-5 text-amber-500 animate-in zoom-in-75 duration-200" />
+            <Sun className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 animate-in zoom-in-75 duration-200" />
           )}
         </button>
 
         {/* Quick Excel Export */}
         <button
           onClick={onQuickExport}
-          className="hidden md:inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 rounded-xl transition-all cursor-pointer border border-emerald-200/60 dark:border-emerald-800"
+          className="hidden md:inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 rounded-xl transition-all cursor-pointer border border-emerald-200/60 dark:border-emerald-800 active:scale-95"
           title="Ekspor ke Excel (.xlsx)"
         >
           <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           <span>Ekspor Excel</span>
         </button>
 
-        {/* Quick Add Button:
-            - Disembunyikan di layar HP (karena HP sudah ada tombol bulat (+) di navigasi bawah)
-            - Di desktop, HANYA ditampilkan di tab 'dashboard' dan 'transactions' (tidak muncul di tabungan/anggaran/pengaturan)
-            - Menggunakan label '+ Catat Transaksi' karena mendukung Pengeluaran & Pemasukan */}
+        {/* Quick Add Button */}
         {(activeTab === 'dashboard' || activeTab === 'transactions') && (
           <button
             onClick={onOpenAddModal}

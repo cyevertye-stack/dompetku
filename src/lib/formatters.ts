@@ -85,6 +85,18 @@ export function getPreviousMonthString(monthYear: string): string {
   return `${y}-${String(m).padStart(2, '0')}`;
 }
 
+export function getNextMonthString(monthYear: string): string {
+  const parts = monthYear.split('-');
+  let y = parseInt(parts[0], 10);
+  let m = parseInt(parts[1], 10);
+  m += 1;
+  if (m > 12) {
+    m = 1;
+    y += 1;
+  }
+  return `${y}-${String(m).padStart(2, '0')}`;
+}
+
 export function getDaysInMonth(monthYear: string): number {
   const [y, m] = monthYear.split('-').map(Number);
   return new Date(y, m, 0).getDate();

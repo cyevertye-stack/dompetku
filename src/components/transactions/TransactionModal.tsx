@@ -72,10 +72,16 @@ export function TransactionModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Tentukan daftar kategori yang relevan
+  // Tentukan daftar kategori yang relevan (Pisahkan Pemasukan vs Pengeluaran)
+  const relevantCategories = categories.filter((c) =>
+    txType === 'income'
+      ? c.id.startsWith('cat-income') || c.id.includes('income')
+      : !c.id.startsWith('cat-income') && !c.id.includes('income')
+  );
+
   const activeCategoryList =
-    categories.length > 0
-      ? categories
+    relevantCategories.length > 0
+      ? relevantCategories
       : txType === 'income'
       ? DEFAULT_INCOME_CATEGORIES
       : DEFAULT_EXPENSE_CATEGORIES;
@@ -93,7 +99,8 @@ export function TransactionModal({
       setTxType('expense');
       setTitle('');
       setAmountStr('');
-      setCategoryId(activeCategoryList[0]?.id || '');
+      const defaultExpCats = categories.filter((c) => !c.id.startsWith('cat-income') && !c.id.includes('income'));
+      setCategoryId(defaultExpCats[0]?.id || DEFAULT_EXPENSE_CATEGORIES[0]?.id || '');
       setDate(getTodayString());
       setPaymentMethod('Tunai');
       setNotes('');
@@ -105,15 +112,13 @@ export function TransactionModal({
   const handleTypeChange = (newType: 'expense' | 'income') => {
     setTxType(newType);
     setErrorMessage('');
-    const list =
-      categories.length > 0
-        ? categories
-        : newType === 'income'
-        ? DEFAULT_INCOME_CATEGORIES
-        : DEFAULT_EXPENSE_CATEGORIES;
-    if (!list.some((c) => c.id === categoryId)) {
-      setCategoryId(list[0]?.id || '');
-    }
+    const list = categories.filter((c) =>
+      newType === 'income'
+        ? c.id.startsWith('cat-income') || c.id.includes('income')
+        : !c.id.startsWith('cat-income') && !c.id.includes('income')
+    );
+    const fallbackList = list.length > 0 ? list : newType === 'income' ? DEFAULT_INCOME_CATEGORIES : DEFAULT_EXPENSE_CATEGORIES;
+    setCategoryId(fallbackList[0]?.id || '');
   };
 
   if (!isOpen) return null;

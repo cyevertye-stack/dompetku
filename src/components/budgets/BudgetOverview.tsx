@@ -25,11 +25,18 @@ export function BudgetOverview({
   onEditCategory,
   onAddNewCategory,
 }: BudgetOverviewProps) {
+  // Hanya hitung pengeluaran (abaikan transaksi pemasukan)
   const currentMonthTxs = transactions.filter((t) => t.date.startsWith(currentMonth));
-  const totalExpense = currentMonthTxs.reduce((sum, t) => sum + t.amount, 0);
+  const currentMonthExpenses = currentMonthTxs.filter((t) => t.type !== 'income');
+  const totalExpense = currentMonthExpenses.reduce((sum, t) => sum + t.amount, 0);
   const remainingBudget = monthlyBudget > 0 ? monthlyBudget - totalExpense : 0;
   const usagePercent =
     monthlyBudget > 0 ? Math.round((totalExpense / monthlyBudget) * 100) : 0;
+
+  // Hanya tampilkan kategori pengeluaran di pos anggaran (kategori pemasukan tidak dianggarkan)
+  const expenseCategories = categories.filter(
+    (c) => !c.id.startsWith('cat-income') && !c.id.includes('income')
+  );
 
   return (
     <div className="space-y-6">
@@ -130,8 +137,8 @@ export function BudgetOverview({
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {categories.map((cat) => {
-              const catTxs = currentMonthTxs.filter((t) => t.categoryId === cat.id);
+            {expenseCategories.map((cat) => {
+              const catTxs = currentMonthExpenses.filter((t) => t.categoryId === cat.id);
               const spent = catTxs.reduce((sum, t) => sum + t.amount, 0);
               const limit = cat.budgetLimit || 0;
               const percent = limit > 0 ? Math.round((spent / limit) * 100) : 0;
