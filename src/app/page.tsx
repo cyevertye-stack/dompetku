@@ -137,15 +137,28 @@ export default function DompetKuApp() {
       ]);
 
       if (txData.success && Array.isArray(txData.data)) {
-        setTransactions(txData.data);
+        if (txData.data.length > 0) {
+          setTransactions(txData.data);
+        } else if (localCached?.transactions && localCached.transactions.length > 0) {
+          const userCached = localCached.transactions.filter((t: any) => !userId || t.userId === userId);
+          if (userCached.length > 0) {
+            setTransactions(userCached);
+          } else {
+            setTransactions([]);
+          }
+        } else {
+          setTransactions([]);
+        }
       } else if (localCached?.transactions) {
-        setTransactions(localCached.transactions.filter((t: any) => t.userId === userId));
+        setTransactions(localCached.transactions.filter((t: any) => !userId || t.userId === userId));
       }
 
-      if (catData.success && Array.isArray(catData.data)) {
+      if (catData.success && Array.isArray(catData.data) && catData.data.length > 0) {
         setCategories(catData.data);
-      } else if (localCached?.categories) {
-        setCategories(localCached.categories.filter((c: any) => c.userId === userId));
+      } else if (localCached?.categories && localCached.categories.length > 0) {
+        setCategories(localCached.categories);
+      } else if (catData.success && Array.isArray(catData.data)) {
+        setCategories(catData.data);
       }
 
       if (budgetData.success && typeof budgetData.data === 'object') {

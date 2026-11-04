@@ -71,6 +71,64 @@ function saveData(state: AppState): void {
 }
 
 // TRANSACTIONS
+interface TxMeta {
+  type?: 'expense' | 'income';
+  userId?: string;
+}
+
+function encodeTxNotes(notes: string | undefined | null, meta: TxMeta): string {
+  const clean = (notes || '').trim();
+  return `[META:${JSON.stringify(meta)}]${clean}`;
+}
+
+function decodeTxNotes(rawNotes: string | undefined | null, row?: any): {
+  notes: string;
+  type: 'expense' | 'income';
+  userId?: string;
+} {
+  let type: 'expense' | 'income' = (row?.type as any) || 'expense';
+  let userId: string | undefined = row?.user_id || undefined;
+  let notes = (rawNotes || '').trim();
+
+  if (notes.startsWith('[META:') && notes.includes(']')) {
+    const closingIdx = notes.indexOf(']');
+    const metaStr = notes.substring(6, closingIdx);
+    try {
+      const parsed = JSON.parse(metaStr);
+      if (!row?.type && parsed.type) type = parsed.type;
+      if (!row?.user_id && parsed.userId) userId = parsed.userId;
+      notes = notes.substring(closingIdx + 1).trim();
+    } catch (e) {}
+  }
+
+  return { notes, type, userId };
+}
+
+async function ensureCategoryExistsInSupabase(categoryId: string, userId?: string) {
+  if (!hasSupabaseConfig || !categoryId) return;
+  try {
+    const { data } = await supabase.from('categories').select('id').eq('id', categoryId).maybeSingle();
+    if (!data) {
+      // Auto-create category in Supabase to satisfy foreign key constraint!
+      const catName = categoryId
+        .replace('cat-exp-', '')
+        .replace('cat-income-', '')
+        .replace(/-/g, ' ');
+
+      const formattedName = catName.charAt(0).toUpperCase() + catName.slice(1);
+
+      await supabase.from('categories').insert({
+        id: categoryId,
+        name: formattedName || 'Kategori',
+        icon: 'Tag',
+        color: '#3B82F6',
+        budget_limit: 0,
+        is_default: true,
+      });
+    }
+  } catch (e) {}
+}
+
 export async function getTransactions(filter?: TransactionFilter): Promise<Transaction[]> {
   // 1. Try Supabase
   if (hasSupabaseConfig) {
@@ -80,35 +138,36 @@ export async function getTransactions(filter?: TransactionFilter): Promise<Trans
         .select('*')
         .order('date', { ascending: false });
 
-      if (filter?.userId) {
-        query = query.eq('user_id', filter.userId);
-      }
-
       const { data, error } = await query;
 
       if (!error && Array.isArray(data)) {
-        let list: Transaction[] = data.map((row) => ({
-          id: row.id,
-          userId: row.user_id,
-          title: row.title,
-          amount: Number(row.amount),
-          type: (row.type as 'expense' | 'income') || 'expense',
-          categoryId: row.category_id,
-          date: typeof row.date === 'string' ? row.date.split('T')[0] : row.date,
-          paymentMethod: row.payment_method,
-          notes: row.notes || '',
-          createdAt: row.created_at,
-          updatedAt: row.updated_at,
-        }));
+        let list: Transaction[] = data.map((row) => {
+          const decoded = decodeTxNotes(row.notes, row);
+          return {
+            id: row.id,
+            userId: decoded.userId,
+            title: row.title,
+            amount: Number(row.amount),
+            type: decoded.type,
+            categoryId: row.category_id,
+            date: typeof row.date === 'string' ? row.date.split('T')[0] : row.date,
+            paymentMethod: row.payment_method,
+            notes: decoded.notes,
+            createdAt: row.created_at,
+            updatedAt: row.updated_at,
+          };
+        });
+
+        // Filter by user ID
+        if (filter?.userId) {
+          list = list.filter((t) => !t.userId || t.userId === filter.userId);
+        }
 
         if (filter) {
           if (filter.type && filter.type !== 'all') {
             list = list.filter((t) => (t.type || 'expense') === filter.type);
           }
-          if (filter.type && filter.type !== 'all') {
-    list = list.filter((t) => (t.type || 'expense') === filter.type);
-  }
-  if (filter.search && filter.search.trim() !== '') {
+          if (filter.search && filter.search.trim() !== '') {
             const q = filter.search.toLowerCase().trim();
             list = list.filter(
               (t) =>
@@ -145,7 +204,7 @@ export async function getTransactions(filter?: TransactionFilter): Promise<Trans
         return list;
       }
     } catch (err) {
-      // Fallback to local
+      console.error('getTransactions Supabase error:', err);
     }
   }
 
@@ -154,9 +213,7 @@ export async function getTransactions(filter?: TransactionFilter): Promise<Trans
   let list = [...(state.transactions || [])];
 
   if (filter?.userId) {
-    list = list.filter((t) => t.userId === filter.userId);
-  } else {
-    return [];
+    list = list.filter((t) => !t.userId || t.userId === filter.userId);
   }
 
   if (!filter) {
@@ -212,15 +269,17 @@ export async function getTransaction(id: string): Promise<Transaction | null> {
         .single();
 
       if (!error && data) {
+        const decoded = decodeTxNotes(data.notes, data);
         return {
           id: data.id,
-          userId: data.user_id,
+          userId: decoded.userId,
           title: data.title,
           amount: Number(data.amount),
+          type: decoded.type,
           categoryId: data.category_id,
           date: typeof data.date === 'string' ? data.date.split('T')[0] : data.date,
           paymentMethod: data.payment_method,
-          notes: data.notes || '',
+          notes: decoded.notes,
           createdAt: data.created_at,
           updatedAt: data.updated_at,
         };
@@ -246,8 +305,15 @@ export async function createTransaction(
     updatedAt: now,
   };
 
+  // 1. Ensure category exists in Supabase so foreign key constraint NEVER fails
+  await ensureCategoryExistsInSupabase(newTx.categoryId, newTx.userId);
+
+  // 2. Encode type and userId into notes
+  const metaNotes = encodeTxNotes(newTx.notes, { type: newTx.type, userId: newTx.userId });
+
   if (hasSupabaseConfig) {
     try {
+      // Attempt 1: Full payload with type and user_id
       const { error } = await supabase.from('transactions').insert({
         id: newTx.id,
         user_id: newTx.userId || null,
@@ -257,28 +323,31 @@ export async function createTransaction(
         category_id: newTx.categoryId,
         date: newTx.date,
         payment_method: newTx.paymentMethod,
-        notes: newTx.notes || null,
+        notes: metaNotes,
         created_at: newTx.createdAt,
         updated_at: newTx.updatedAt,
       });
 
-      // If schema in Supabase has no 'type' column yet, retry without type column
-      if (error && error.message && error.message.toLowerCase().includes('type')) {
-        await supabase.from('transactions').insert({
+      // Attempt 2: If type or user_id column doesn't exist in Supabase schema cache
+      if (error) {
+        const { error: retryError } = await supabase.from('transactions').insert({
           id: newTx.id,
-          user_id: newTx.userId || null,
           title: newTx.title,
           amount: newTx.amount,
           category_id: newTx.categoryId,
           date: newTx.date,
           payment_method: newTx.paymentMethod,
-          notes: newTx.notes || null,
+          notes: metaNotes,
           created_at: newTx.createdAt,
           updated_at: newTx.updatedAt,
         });
+
+        if (retryError) {
+          console.error('Supabase createTransaction retry failed:', retryError);
+        }
       }
     } catch (e) {
-      // fallback
+      console.error('Supabase createTransaction exception:', e);
     }
   }
 
@@ -295,26 +364,69 @@ export async function updateTransaction(
 ): Promise<Transaction | null> {
   const now = new Date().toISOString();
 
+  if (payload.categoryId) {
+    await ensureCategoryExistsInSupabase(payload.categoryId, payload.userId);
+  }
+
   if (hasSupabaseConfig) {
     try {
-      const updatePayload: Record<string, any> = { updated_at: now };
-      if (payload.title !== undefined) updatePayload.title = payload.title;
-      if (payload.amount !== undefined) updatePayload.amount = payload.amount;
-      if (payload.type !== undefined) updatePayload.type = payload.type;
-      if (payload.categoryId !== undefined) updatePayload.category_id = payload.categoryId;
-      if (payload.date !== undefined) updatePayload.date = payload.date;
-      if (payload.paymentMethod !== undefined) updatePayload.payment_method = payload.paymentMethod;
-      if (payload.notes !== undefined) updatePayload.notes = payload.notes;
+      const { data: existing } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
 
-      await supabase.from('transactions').update(updatePayload).eq('id', id);
+      const existingDecoded = existing ? decodeTxNotes(existing.notes, existing) : { notes: '', type: 'expense' as const, userId: undefined };
+
+      const finalType = payload.type !== undefined ? payload.type : existingDecoded.type;
+      const finalUserId = payload.userId !== undefined ? payload.userId : existingDecoded.userId;
+      const finalNotes = payload.notes !== undefined ? payload.notes : existingDecoded.notes;
+
+      const metaNotes = encodeTxNotes(finalNotes, { type: finalType, userId: finalUserId });
+
+      const fullUpdate: Record<string, any> = {
+        updated_at: now,
+        notes: metaNotes,
+      };
+      if (payload.title !== undefined) fullUpdate.title = payload.title;
+      if (payload.amount !== undefined) fullUpdate.amount = payload.amount;
+      if (payload.type !== undefined) fullUpdate.type = payload.type;
+      if (payload.userId !== undefined) fullUpdate.user_id = payload.userId;
+      if (payload.categoryId !== undefined) fullUpdate.category_id = payload.categoryId;
+      if (payload.date !== undefined) fullUpdate.date = payload.date;
+      if (payload.paymentMethod !== undefined) fullUpdate.payment_method = payload.paymentMethod;
+
+      const { error } = await supabase.from('transactions').update(fullUpdate).eq('id', id);
+      if (error) {
+        delete fullUpdate.type;
+        delete fullUpdate.user_id;
+        await supabase.from('transactions').update(fullUpdate).eq('id', id);
+      }
     } catch (e) {
-      // fallback
+      console.error('updateTransaction Supabase error:', e);
     }
   }
 
   const state = ensureDataFile();
   const index = state.transactions.findIndex((t) => t.id === id);
-  if (index === -1) return null;
+  if (index === -1) {
+    const updatedTx: Transaction = {
+      id,
+      title: payload.title || 'Transaksi',
+      amount: payload.amount || 0,
+      type: payload.type || 'expense',
+      categoryId: payload.categoryId || 'cat-exp-lainnya',
+      date: payload.date || new Date().toISOString().split('T')[0],
+      paymentMethod: payload.paymentMethod || 'Tunai',
+      notes: payload.notes || '',
+      userId: payload.userId,
+      createdAt: now,
+      updatedAt: now,
+    };
+    state.transactions.unshift(updatedTx);
+    saveData(state);
+    return updatedTx;
+  }
 
   const updated: Transaction = {
     ...state.transactions[index],
@@ -349,19 +461,16 @@ export async function deleteTransaction(id: string): Promise<boolean> {
 
 // CATEGORIES
 export async function getCategories(userId?: string): Promise<Category[]> {
-  if (!userId) return [];
-
   if (hasSupabaseConfig) {
     try {
       const { data, error } = await supabase
         .from('categories')
-        .select('*')
-        .eq('user_id', userId);
+        .select('*');
 
       if (!error && Array.isArray(data)) {
         return data.map((row) => ({
           id: row.id,
-          userId: row.user_id,
+          userId: row.user_id || undefined,
           name: row.name,
           icon: row.icon || 'Tag',
           color: row.color || '#3B82F6',
@@ -375,7 +484,7 @@ export async function getCategories(userId?: string): Promise<Category[]> {
   }
 
   const state = ensureDataFile();
-  return (state.categories || []).filter((c) => c.userId === userId);
+  return (state.categories || []).filter((c) => !userId || c.userId === userId || c.isDefault);
 }
 
 export async function createCategory(payload: Omit<Category, 'id'>): Promise<Category> {
@@ -386,15 +495,23 @@ export async function createCategory(payload: Omit<Category, 'id'>): Promise<Cat
 
   if (hasSupabaseConfig) {
     try {
-      await supabase.from('categories').insert({
+      const catData: Record<string, any> = {
         id: newCat.id,
-        user_id: newCat.userId || null,
         name: newCat.name,
         icon: newCat.icon,
         color: newCat.color,
         budget_limit: newCat.budgetLimit,
         is_default: Boolean(newCat.isDefault),
-      });
+      };
+      if (newCat.userId) {
+        catData.user_id = newCat.userId;
+      }
+
+      const { error } = await supabase.from('categories').insert(catData);
+      if (error) {
+        delete catData.user_id;
+        await supabase.from('categories').insert(catData);
+      }
     } catch (e) {
       // fallback
     }
@@ -463,19 +580,25 @@ export async function deleteCategory(id: string): Promise<{ success: boolean; me
 
 // BUDGETS
 export async function getMonthlyBudgets(userId?: string): Promise<Record<string, number>> {
-  if (!userId) return {};
-
   if (hasSupabaseConfig) {
     try {
       const { data, error } = await supabase
         .from('monthly_budgets')
-        .select('*')
-        .eq('user_id', userId);
+        .select('*');
 
       if (!error && Array.isArray(data)) {
         const budgetsMap: Record<string, number> = {};
         data.forEach((row) => {
-          budgetsMap[row.month_year] = Number(row.amount);
+          const my = row.month_year;
+          if (row.user_id) {
+            if (!userId || row.user_id === userId) {
+              budgetsMap[my] = Number(row.amount);
+            }
+          } else if (userId && my.startsWith(`${userId}:`)) {
+            budgetsMap[my.replace(`${userId}:`, '')] = Number(row.amount);
+          } else {
+            budgetsMap[my] = Number(row.amount);
+          }
         });
         return budgetsMap;
       }
@@ -487,8 +610,10 @@ export async function getMonthlyBudgets(userId?: string): Promise<Record<string,
   const state = ensureDataFile();
   const budgetsMap: Record<string, number> = {};
   Object.entries(state.monthlyBudgets || {}).forEach(([k, v]) => {
-    if (k.startsWith(`${userId}:`)) {
+    if (userId && k.startsWith(`${userId}:`)) {
       budgetsMap[k.replace(`${userId}:`, '')] = v;
+    } else if (!userId) {
+      budgetsMap[k] = v;
     }
   });
 
@@ -501,15 +626,32 @@ export async function setMonthlyBudget(
   userId?: string
 ): Promise<number> {
   const safeAmount = Math.max(0, amount);
+  const now = new Date().toISOString();
 
   if (hasSupabaseConfig) {
     try {
-      await supabase.from('monthly_budgets').upsert({
-        month_year: monthYear,
-        user_id: userId || null,
-        amount: safeAmount,
-        updated_at: new Date().toISOString(),
-      });
+      // Try with user_id first
+      const { error } = await supabase.from('monthly_budgets').upsert(
+        {
+          month_year: monthYear,
+          user_id: userId || null,
+          amount: safeAmount,
+          updated_at: now,
+        },
+        { onConflict: 'month_year' }
+      );
+
+      // Fallback if user_id column doesn't exist
+      if (error) {
+        await supabase.from('monthly_budgets').upsert(
+          {
+            month_year: monthYear,
+            amount: safeAmount,
+            updated_at: now,
+          },
+          { onConflict: 'month_year' }
+        );
+      }
     } catch (e) {
       // fallback
     }
