@@ -767,7 +767,14 @@ export default function DompetKuApp() {
                 <SummaryCards
                   metrics={metrics}
                   onOpenBudgetModal={() => setIsBudgetModalOpen(true)}
-                  onOpenSavings={() => setActiveTab('savings')}
+                  onOpenSavings={(targetTab) => {
+                    if (targetTab) {
+                      try {
+                        localStorage.setItem('dompetku-savings-subtab', targetTab);
+                      } catch (e) {}
+                    }
+                    setActiveTab('savings');
+                  }}
                 />
 
                 {/* 2. Budget Alert Banner */}
