@@ -5,9 +5,10 @@ export async function POST(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const action = searchParams.get('action');
+    const userId = searchParams.get('userId') || undefined;
 
     if (action === 'reset') {
-      const state = await resetAllData();
+      const state = await resetAllData(userId);
       return NextResponse.json({
         success: true,
         message: 'Semua data transaksi berhasil direset!',
@@ -15,7 +16,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const state = await seedDemoData();
+    const state = await seedDemoData(userId);
     return NextResponse.json({
       success: true,
       message: 'Data contoh pengeluaran berhasil dimuat!',

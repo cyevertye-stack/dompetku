@@ -166,21 +166,30 @@ export function TransactionList({
                 </div>
                 <div className="flex items-center gap-1">
                   <button
-                    onClick={() => onSelect(tx)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelect(tx);
+                    }}
                     className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
                     title="Detail"
                   >
                     <Eye className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => onEdit(tx)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEdit(tx);
+                    }}
                     className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
                     title="Edit"
                   >
                     <Edit3 className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => onDelete(tx)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(tx);
+                    }}
                     className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer"
                     title="Hapus"
                   >

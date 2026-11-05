@@ -454,23 +454,31 @@ export async function updateTransaction(
 }
 
 export async function deleteTransaction(id: string): Promise<boolean> {
+  let supabaseDeleted = false;
   if (hasSupabaseConfig) {
     try {
-      await supabase.from('transactions').delete().eq('id', id);
+      const { error } = await supabase.from('transactions').delete().eq('id', id);
+      if (!error) {
+        supabaseDeleted = true;
+      } else {
+        console.error('Supabase delete transaction error:', error);
+      }
     } catch (e) {
-      // fallback
+      console.error('Supabase delete transaction exception:', e);
     }
   }
 
   const state = ensureDataFile();
   const initialLength = state.transactions.length;
   state.transactions = state.transactions.filter((t) => t.id !== id);
+  const localDeleted = state.transactions.length !== initialLength;
 
-  if (state.transactions.length !== initialLength) {
+  if (localDeleted) {
     saveData(state);
-    return true;
   }
-  return false;
+
+  // Always return true if it was removed or idempotent
+  return true;
 }
 
 // CATEGORIES
@@ -571,8 +579,8 @@ export async function updateCategory(
 
 export async function deleteCategory(id: string): Promise<{ success: boolean; message?: string }> {
   const state = ensureDataFile();
-  const used = state.transactions.some((t) => t.categoryId === id);
-  if (used) {
+  const usedInLocal = state.transactions.some((t) => t.categoryId === id);
+  if (usedInLocal) {
     return {
       success: false,
       message: 'Kategori ini tidak dapat dihapus karena masih digunakan dalam transaksi!',
@@ -581,9 +589,23 @@ export async function deleteCategory(id: string): Promise<{ success: boolean; me
 
   if (hasSupabaseConfig) {
     try {
+      // Check if any transaction in Supabase uses this category
+      const { data: usedTxs } = await supabase
+        .from('transactions')
+        .select('id')
+        .eq('category_id', id)
+        .limit(1);
+
+      if (usedTxs && usedTxs.length > 0) {
+        return {
+          success: false,
+          message: 'Kategori ini tidak dapat dihapus karena masih digunakan dalam riwayat transaksi!',
+        };
+      }
+
       await supabase.from('categories').delete().eq('id', id);
     } catch (e) {
-      // fallback
+      console.error('Supabase delete category error:', e);
     }
   }
 
@@ -738,6 +760,18 @@ export async function seedDemoData(userId?: string): Promise<AppState> {
 }
 
 export async function resetAllData(userId?: string): Promise<AppState> {
+  if (hasSupabaseConfig) {
+    try {
+      if (userId) {
+        await supabase.from('transactions').delete().eq('user_id', userId);
+      } else {
+        await supabase.from('transactions').delete().neq('id', '');
+      }
+    } catch (e) {
+      console.error('Supabase reset transactions error:', e);
+    }
+  }
+
   const state = ensureDataFile();
   if (userId) {
     state.transactions = state.transactions.filter((t) => t.userId !== userId);
@@ -836,15 +870,20 @@ export async function deleteSavingsGoal(id: string, userId?: string): Promise<bo
     try {
       await supabase.from('savings_goals').delete().eq('id', id);
     } catch (e) {
-      // fallback
+      console.error('Supabase delete savings goal error:', e);
     }
   }
 
   const state = ensureDataFile();
   if (state.savingsGoals) {
     state.savingsGoals = state.savingsGoals.filter((g) => g.id !== id);
-    saveData(state);
   }
+  if (state.savingsTransactions) {
+    state.savingsTransactions = state.savingsTransactions.map((tx) =>
+      tx.goalId === id ? { ...tx, goalId: undefined } : tx
+    );
+  }
+  saveData(state);
   return true;
 }
 
@@ -937,9 +976,33 @@ export async function saveSavingsTransaction(tx: SavingsTransaction): Promise<Sa
 export async function deleteSavingsTransaction(id: string, userId?: string): Promise<boolean> {
   if (hasSupabaseConfig) {
     try {
+      // Revert goal amount in Supabase if linked to a goal
+      const { data: txRow } = await supabase
+        .from('savings_transactions')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+
+      if (txRow && txRow.goal_id) {
+        const { data: goalRow } = await supabase
+          .from('savings_goals')
+          .select('*')
+          .eq('id', txRow.goal_id)
+          .maybeSingle();
+
+        if (goalRow) {
+          const rev = txRow.type === 'deposit' ? -Number(txRow.amount) : Number(txRow.amount);
+          const newAmount = Math.max(0, Number(goalRow.current_amount || 0) + rev);
+          await supabase
+            .from('savings_goals')
+            .update({ current_amount: newAmount })
+            .eq('id', txRow.goal_id);
+        }
+      }
+
       await supabase.from('savings_transactions').delete().eq('id', id);
     } catch (e) {
-      // fallback
+      console.error('Supabase delete savings transaction exception:', e);
     }
   }
 
@@ -952,11 +1015,6 @@ export async function deleteSavingsTransaction(id: string, userId?: string): Pro
         // Reverse the effect
         const rev = found.type === 'deposit' ? -found.amount : found.amount;
         goal.currentAmount = Math.max(0, (goal.currentAmount || 0) + rev);
-        if (hasSupabaseConfig) {
-          try {
-            await supabase.from('savings_goals').update({ current_amount: goal.currentAmount }).eq('id', goal.id);
-          } catch (e) {}
-        }
       }
     }
     state.savingsTransactions = state.savingsTransactions.filter((s) => s.id !== id);

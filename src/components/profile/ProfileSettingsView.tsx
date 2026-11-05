@@ -434,7 +434,7 @@ export function ProfileSettingsView({
           </p>
         </div>
 
-        <BackupRestore onRefreshData={onRefreshData} />
+        <BackupRestore onRefreshData={onRefreshData} userId={currentUser?.id} />
       </div>
 
       {/* Konfirmasi Logout */}

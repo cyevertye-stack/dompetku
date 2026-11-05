@@ -170,12 +170,15 @@ export function SavingsView({
 
       const query = `?type=${deleteType}&id=${deleteConfirmId}${userId ? `&userId=${userId}` : ''}`;
       const res = await fetch(`/api/savings${query}`, { method: 'DELETE' });
-      const result = await res.json();
-      if (result.success) {
+      const result = await res.json().catch(() => ({}));
+      if (res.ok && result.success !== false) {
         onRefresh();
+      } else {
+        alert(result.error || result.message || 'Gagal menghapus item');
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error('Gagal menghapus item:', e);
+      alert('Gagal menghapus: ' + (e?.message || e));
     } finally {
       setDeleteConfirmId(null);
     }

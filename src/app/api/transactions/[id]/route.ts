@@ -70,18 +70,20 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
-    const success = await deleteTransaction(id);
-    if (!success) {
+    const resolvedParams = await params;
+    const id = resolvedParams?.id;
+    if (!id) {
       return NextResponse.json(
-        { success: false, message: 'Transaksi tidak ditemukan atau gagal dihapus' },
-        { status: 404 }
+        { success: false, message: 'ID transaksi tidak valid' },
+        { status: 400 }
       );
     }
+    await deleteTransaction(id);
     return NextResponse.json({ success: true, message: 'Transaksi berhasil dihapus' });
-  } catch (error) {
+  } catch (error: any) {
+    console.error('Error deleting transaction:', error);
     return NextResponse.json(
-      { success: false, message: 'Gagal menghapus transaksi' },
+      { success: false, message: error?.message || 'Gagal menghapus transaksi' },
       { status: 500 }
     );
   }

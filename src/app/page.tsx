@@ -97,6 +97,9 @@ export default function DompetKuApp() {
     isOpen: boolean;
     title: string;
     message: string;
+    confirmText?: string;
+    cancelText?: string;
+    isDestructive?: boolean;
     onConfirm: () => Promise<void>;
   }>({
     isOpen: false,
@@ -143,45 +146,32 @@ export default function DompetKuApp() {
       ]);
 
       if (txData.success && Array.isArray(txData.data)) {
-        if (txData.data.length > 0) {
-          setTransactions(txData.data);
-        } else if (localCached?.transactions && localCached.transactions.length > 0) {
-          const userCached = localCached.transactions.filter((t: any) => !userId || t.userId === userId);
-          if (userCached.length > 0) {
-            setTransactions(userCached);
-          } else {
-            setTransactions([]);
-          }
-        } else {
-          setTransactions([]);
-        }
+        setTransactions(txData.data);
       } else if (localCached?.transactions) {
         setTransactions(localCached.transactions.filter((t: any) => !userId || t.userId === userId));
       }
 
-      if (catData.success && Array.isArray(catData.data) && catData.data.length > 0) {
+      if (catData.success && Array.isArray(catData.data)) {
         setCategories(catData.data);
-      } else if (localCached?.categories && localCached.categories.length > 0) {
+      } else if (localCached?.categories) {
         setCategories(localCached.categories);
-      } else if (catData.success && Array.isArray(catData.data)) {
-        setCategories(catData.data);
       }
 
-      if (budgetData.success && typeof budgetData.data === 'object') {
+      if (budgetData.success && typeof budgetData.data === 'object' && budgetData.data !== null) {
         setMonthlyBudgets(budgetData.data);
       } else if (localCached?.monthlyBudgets) {
         setMonthlyBudgets(localCached.monthlyBudgets);
       }
 
       if (savingsData.success && savingsData.data) {
-        setSavingsGoals(Array.isArray(savingsData.data.goals) ? savingsData.data.goals : (localCached?.savingsGoals || []));
-        setSavingsTransactions(Array.isArray(savingsData.data.transactions) ? savingsData.data.transactions : (localCached?.savingsTransactions || []));
-        setTotalSavings(typeof savingsData.data.totalSavings === 'number' ? savingsData.data.totalSavings : (localCached?.totalSavings ?? 0));
-        setSavingsThisMonth(typeof savingsData.data.savingsThisMonth === 'number' ? savingsData.data.savingsThisMonth : (localCached?.savingsThisMonth ?? 0));
-        setGoldSavings(Array.isArray(savingsData.data.goldSavings) ? savingsData.data.goldSavings : (localCached?.goldSavings || []));
-        setGoldTransactions(Array.isArray(savingsData.data.goldTransactions) ? savingsData.data.goldTransactions : (localCached?.goldTransactions || []));
-        setTotalGoldGrams(typeof savingsData.data.totalGoldGrams === 'number' ? savingsData.data.totalGoldGrams : (localCached?.totalGoldGrams ?? 0));
-        setTotalGoldEstimatedValue(typeof savingsData.data.totalGoldEstimatedValue === 'number' ? savingsData.data.totalGoldEstimatedValue : (localCached?.totalGoldEstimatedValue ?? 0));
+        setSavingsGoals(Array.isArray(savingsData.data.goals) ? savingsData.data.goals : []);
+        setSavingsTransactions(Array.isArray(savingsData.data.transactions) ? savingsData.data.transactions : []);
+        setTotalSavings(typeof savingsData.data.totalSavings === 'number' ? savingsData.data.totalSavings : 0);
+        setSavingsThisMonth(typeof savingsData.data.savingsThisMonth === 'number' ? savingsData.data.savingsThisMonth : 0);
+        setGoldSavings(Array.isArray(savingsData.data.goldSavings) ? savingsData.data.goldSavings : []);
+        setGoldTransactions(Array.isArray(savingsData.data.goldTransactions) ? savingsData.data.goldTransactions : []);
+        setTotalGoldGrams(typeof savingsData.data.totalGoldGrams === 'number' ? savingsData.data.totalGoldGrams : 0);
+        setTotalGoldEstimatedValue(typeof savingsData.data.totalGoldEstimatedValue === 'number' ? savingsData.data.totalGoldEstimatedValue : 0);
       } else if (localCached) {
         setSavingsGoals(localCached.savingsGoals || []);
         setSavingsTransactions(localCached.savingsTransactions || []);
@@ -653,15 +643,38 @@ export default function DompetKuApp() {
       message: `Apakah Anda yakin ingin menghapus catatan "${tx.title}" sebesar ${formatRupiah(
         tx.amount
       )}? Data tidak dapat dipulihkan.`,
+      confirmText: 'Hapus',
+      isDestructive: true,
       onConfirm: async () => {
-        const res = await fetch(`/api/transactions/${tx.id}`, {
-          method: 'DELETE',
-        });
-        if (res.ok) {
-          setTransactions((prev) => prev.filter((t) => t.id !== tx.id));
-          if (detailTransaction?.id === tx.id) setDetailTransaction(null);
+        try {
+          const res = await fetch(`/api/transactions/${tx.id}`, {
+            method: 'DELETE',
+          });
+          const result = await res.json().catch(() => ({}));
+          if (res.ok && result.success !== false) {
+            setTransactions((prev) => prev.filter((t) => t.id !== tx.id));
+            if (detailTransaction?.id === tx.id) setDetailTransaction(null);
+
+            // Update user cache immediately so it doesn't resurrect
+            if (currentUser) {
+              const cacheKey = `dompetku-cache-${currentUser.id}`;
+              try {
+                const raw = localStorage.getItem(cacheKey);
+                if (raw) {
+                  const parsed = JSON.parse(raw);
+                  parsed.transactions = (parsed.transactions || []).filter((t: any) => t.id !== tx.id);
+                  localStorage.setItem(cacheKey, JSON.stringify(parsed));
+                }
+              } catch (e) {}
+            }
+          } else {
+            alert(result.message || 'Gagal menghapus transaksi.');
+          }
+        } catch (error: any) {
+          alert('Terjadi kesalahan saat menghapus transaksi: ' + (error?.message || error));
+        } finally {
+          setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
         }
-        setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
       },
     });
   };
@@ -700,21 +713,45 @@ export default function DompetKuApp() {
   };
 
   const handleDeleteCategory = (cat: Category) => {
+    const isUsed = transactions.some((t) => t.categoryId === cat.id);
+    if (isUsed) {
+      alert(`Kategori "${cat.name}" tidak dapat dihapus karena masih digunakan dalam riwayat transaksi.`);
+      return;
+    }
+
     setConfirmDialog({
       isOpen: true,
       title: 'Hapus Kategori?',
       message: `Hapus kategori "${cat.name}"? Kategori hanya dapat dihapus jika tidak memiliki transaksi terhubung.`,
+      confirmText: 'Hapus',
+      isDestructive: true,
       onConfirm: async () => {
-        const res = await fetch(`/api/categories?id=${cat.id}`, {
-          method: 'DELETE',
-        });
-        const result = await res.json();
-        if (!res.ok) {
-          alert(result.message || 'Gagal menghapus kategori');
-        } else {
-          setCategories((prev) => prev.filter((c) => c.id !== cat.id));
+        try {
+          const res = await fetch(`/api/categories?id=${cat.id}`, {
+            method: 'DELETE',
+          });
+          const result = await res.json().catch(() => ({}));
+          if (!res.ok || result.success === false) {
+            alert(result.message || 'Gagal menghapus kategori');
+          } else {
+            setCategories((prev) => prev.filter((c) => c.id !== cat.id));
+            if (currentUser) {
+              const cacheKey = `dompetku-cache-${currentUser.id}`;
+              try {
+                const raw = localStorage.getItem(cacheKey);
+                if (raw) {
+                  const parsed = JSON.parse(raw);
+                  parsed.categories = (parsed.categories || []).filter((c: any) => c.id !== cat.id);
+                  localStorage.setItem(cacheKey, JSON.stringify(parsed));
+                }
+              } catch (e) {}
+            }
+          }
+        } catch (error: any) {
+          alert('Gagal menghapus kategori: ' + (error?.message || error));
+        } finally {
+          setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
         }
-        setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
       },
     });
   };
@@ -1195,6 +1232,9 @@ export default function DompetKuApp() {
         isOpen={confirmDialog.isOpen}
         title={confirmDialog.title}
         message={confirmDialog.message}
+        confirmText={confirmDialog.confirmText}
+        cancelText={confirmDialog.cancelText}
+        isDestructive={confirmDialog.isDestructive}
         onConfirm={confirmDialog.onConfirm}
         onCancel={() => setConfirmDialog((prev) => ({ ...prev, isOpen: false }))}
       />

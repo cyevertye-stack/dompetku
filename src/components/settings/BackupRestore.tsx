@@ -13,10 +13,12 @@ import { ConfirmDialog } from '../ui/ConfirmDialog';
 
 interface BackupRestoreProps {
   onRefreshData: () => Promise<void>;
+  userId?: string;
 }
 
 export function BackupRestore({
   onRefreshData,
+  userId,
 }: BackupRestoreProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -111,9 +113,16 @@ export function BackupRestore({
   const handleResetData = async () => {
     try {
       setIsProcessing(true);
-      const res = await fetch('/api/seed?action=reset', { method: 'POST' });
+      const url = `/api/seed?action=reset${userId ? `&userId=${userId}` : ''}`;
+      const res = await fetch(url, { method: 'POST' });
       const result = await res.json();
       if (!res.ok) throw new Error(result.message);
+
+      if (userId) {
+        try {
+          localStorage.removeItem(`dompetku-cache-${userId}`);
+        } catch (e) {}
+      }
 
       await onRefreshData();
       setStatusMessage({ type: 'success', text: 'Semua data transaksi berhasil dibersihkan!' });
@@ -121,7 +130,7 @@ export function BackupRestore({
       setStatusMessage({ type: 'error', text: err.message || 'Gagal mereset data' });
     } finally {
       setIsProcessing(false);
-      setConfirmDialog({ ...confirmDialog, isOpen: false });
+      setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
     }
   };
 

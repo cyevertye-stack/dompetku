@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createTransaction, getTransactions } from '@/lib/storage';
+import { createTransaction, deleteTransaction, getTransactions } from '@/lib/storage';
 import { TransactionFilter } from '@/lib/types';
 
 export async function GET(request: NextRequest) {
@@ -78,6 +78,29 @@ export async function POST(request: NextRequest) {
     console.error('Error creating transaction:', error);
     return NextResponse.json(
       { success: false, message: 'Terjadi kesalahan server saat menyimpan transaksi' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json(
+        { success: false, message: 'ID transaksi wajib disertakan' },
+        { status: 400 }
+      );
+    }
+
+    await deleteTransaction(id);
+    return NextResponse.json({ success: true, message: 'Transaksi berhasil dihapus' });
+  } catch (error: any) {
+    console.error('Error deleting transaction:', error);
+    return NextResponse.json(
+      { success: false, message: error?.message || 'Gagal menghapus transaksi' },
       { status: 500 }
     );
   }
